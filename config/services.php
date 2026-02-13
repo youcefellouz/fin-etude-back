@@ -35,4 +35,24 @@ return [
         ],
     ],
 
+    // ============== IMAGE ANALYSIS SERVICES ==============
+    'image_analysis' => [
+        'provider' => env('IMAGE_ANALYSIS_PROVIDER', 'google'), // google, aws, azure
+    ],
+
+    'google' => [
+        'vision_api_key' => env('GOOGLE_VISION_API_KEY'),
+    ],
+
+    'aws' => [
+        'access_key_id' => env('AWS_ACCESS_KEY_ID'),
+        'secret_access_key' => env('AWS_SECRET_ACCESS_KEY'),
+        'region' => env('AWS_DEFAULT_REGION', 'us-east-1'),
+    ],
+
+    'azure' => [
+        'vision_api_key' => env('AZURE_VISION_API_KEY'),
+        'vision_endpoint' => env('AZURE_VISION_ENDPOINT'),
+    ],
+
 ];

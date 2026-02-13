@@ -12,6 +12,7 @@ use App\Http\Controllers\StationController;
 use App\Http\Controllers\DiscountController;
 use App\Http\Controllers\OrderController;
 use App\Http\Controllers\UserController;
+use App\Http\Controllers\SearchController;
 
 Route::get('/user', function (Request $request) {
     return $request->user();
@@ -48,4 +49,12 @@ Route::get('discounts/{discount_id}/articles', [DiscountController::class,'get_d
 
 Route::apiResource('orders', OrderController::class);
 Route::get('orders/{order_id}/articles', [OrderController::class, 'get_order_articles']);
+
+// ============== UNIFIED SEARCH ENDPOINTS ==============
+// البحث الموحد يدعم: نص فقط، صورة فقط، أو هجين (نص + صورة)
+Route::post('search/unified', [SearchController::class, 'unified']);
+Route::get('search/text', [SearchController::class, 'textSearch']);
+Route::post('search/image', [SearchController::class, 'imageSearch']);
+Route::post('search/hybrid', [SearchController::class, 'hybridSearch']);
+Route::post('search/advanced', [SearchController::class, 'advancedSearch']);
 
