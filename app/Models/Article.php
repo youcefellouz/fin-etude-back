@@ -12,7 +12,7 @@ class Article extends Model
         'price',
         'category_id',
         'brand_id',
-        'image_url',
+        'image',
     ];
 
     public function category()
@@ -57,5 +57,9 @@ class Article extends Model
         }
 
         return $this->price;
+    }
+    public function productAnalytics()
+    {
+        return $this->hasOne(ProductAnalytics::class);
     }
 }

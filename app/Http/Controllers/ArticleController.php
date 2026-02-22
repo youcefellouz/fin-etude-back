@@ -15,8 +15,12 @@ class ArticleController extends Controller
     }
 
     public function store(StoreArticleRequest $request){ 
-       $article=Article::create($request->validated()); 
-       return response()->json($article,201); 
+       $article=Article::create($request->validated());  
+        if($request->hasFile('image')){
+          $path=$request->file('image')->store('articles','public');
+          $article['image']=$path;
+       }
+        return response()->json($article,201);
  }
     public function update(UpdateArticleRequest $request, $id ){ 
        $article=Article::findOrFail($id); 

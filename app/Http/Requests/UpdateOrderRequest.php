@@ -21,14 +21,17 @@ class UpdateOrderRequest extends FormRequest
      */
     public function rules(): array
     {
-        return [
-        'user_id' => 'sometimes|nullable|exists:users,id',
-        'guest_name' => 'sometimes|required_without:user_id|string|max:255',
-        'guest_phone' => 'sometimes|required_without:user_id|string|max:20',
-        'status' => 'sometimes|in:pending,confirmed,cancelled',
-        'articles' => 'sometimes|array|min:1',
+         $isAuthenticated = auth('sanctum')->check();
+
+    return [
+        'status' => 'nullable|in:pending,confirmed,cancelled',
+        'guest_name' => $isAuthenticated ? 'nullable|string' : 'nullable|string',
+        'guest_phone' => $isAuthenticated ? 'nullable|string' : 'nullable|string',
+        'station_id' => 'nullable|exists:stations,id',
+        'articles' => 'nullable|array|min:1',
         'articles.*.article_id' => 'required_with:articles|exists:articles,id',
         'articles.*.quantity' => 'required_with:articles|integer|min:1',
+        'articles.*.unit_price' => 'nullable|numeric|min:0',
     ];
     }
 }

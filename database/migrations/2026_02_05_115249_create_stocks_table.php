@@ -16,6 +16,7 @@ return new class extends Migration
             $table->foreignId('article_id')->constrained('articles')->cascadeOnDelete();;
             $table->foreignId('station_id')->constrained('stations')->cascadeOnDelete();;
             $table->integer('quantity')->default(1);
+            $table->unique(['article_id', 'station_id']);  // el tekrar el zayed myt3wdch 
             $table->timestamps();
         });
     }

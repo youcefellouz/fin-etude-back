@@ -23,9 +23,10 @@ class StoreStationRequest extends FormRequest
     {
         return [
             'name' => 'required|string|max:255',
-            'city' => 'required|string|max:255',
+            'city' => 'required|string|max:255|in:sfax,sousse,tunis',
             'type' => 'required|string|in:commerciale,technique',
             'location' => 'required|string|max:255',
+            'status' => 'required|string|in:active,inactive',
         ];
     }
     function messages(): array

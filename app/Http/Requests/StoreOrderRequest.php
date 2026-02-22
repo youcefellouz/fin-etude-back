@@ -21,25 +21,25 @@ class StoreOrderRequest extends FormRequest
      */
     public function rules(): array
     {
-       return [
+       $isAuthenticated = auth('sanctum')->check();
+
+    return [
         'status' => 'nullable|in:pending,confirmed,cancelled',
-        'guest_name' => 'required_without:user_id|string',
-        'guest_phone' => 'required_without:user_id|string',
-        'user_id' => 'nullable|exists:users,id',
-        
-        // articles array
+        'guest_name' => $isAuthenticated ? 'nullable|string' : 'required|string',
+        'guest_phone' => $isAuthenticated ? 'nullable|string' : 'required|string',
+        'station_id' => 'required|exists:stations,id',
         'articles' => 'required|array|min:1',
         'articles.*.article_id' => 'required|exists:articles,id',
         'articles.*.quantity' => 'required|integer|min:1',
-        // إضافة unit_price اختياري - إذا لم يُرسل سيحسب تلقائياً
         'articles.*.unit_price' => 'nullable|numeric|min:0',
     ];
+    
     }
     public function messages(): array
     {
         return [
-            'global_price.required' => 'Le champ prix global est requis.',
-            'global_price.numeric' => 'Le champ prix global doit être un nombre.',
+            'station_id.required' => 'Le point de vente est requis.',
+            'station_id.exists' => 'Le point de vente spécifié n\'existe pas.',
             'status.required' => 'Le champ statut est requis.',
             'status.string' => 'Le champ statut doit être une chaîne de caractères.',
             'guest_name.required_without' => 'Le champ nom du client est requis lorsque user_id n\'est pas fourni.',

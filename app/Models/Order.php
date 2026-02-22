@@ -10,6 +10,7 @@ class Order extends Model
         'global_price',
         'status',
         'user_id',
+        'station_id',
         'guest_name',
         'guest_phone',
     ];
@@ -17,6 +18,11 @@ class Order extends Model
     public function user()
     {
         return $this->belongsTo(User::class);
+    }
+
+    public function station()
+    {
+        return $this->belongsTo(Station::class);
     }
 
     public function articles()

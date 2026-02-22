@@ -24,9 +24,9 @@ class StoreProfileRequest extends FormRequest
         return [  
             'phone' => 'nullable|string|max:20',
             'address' => 'nullable|string|max:255',
-            'user_id' => 'required|exists:users,id',
+            //'user_id' => 'required|exists:users,id',
             'date_birth' => 'nullable|date',
-            'image' => 'nullable|image|max:2048',
+            'image' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048',
         ];
     }
     function messages(): array

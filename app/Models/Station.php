@@ -17,4 +17,9 @@ class Station extends Model
     {
         return $this->belongsToMany(Article::class, 'stocks')->withPivot('quantity');
     }
+
+    public function orders()
+    {
+        return $this->hasMany(Order::class);
+    }
 }

@@ -13,10 +13,10 @@ return new class extends Migration
     {
         Schema::create('stations', function (Blueprint $table) {
             $table->id();
-            $table->string('name');
-            $table->string('location');
-            $table->string('status')->default('active');
-            $table->string('city');
+            $table->string('name',100);
+            $table->string('location',255);
+            $table->enum('status', ['active', 'inactive']);
+            $table->enum('city',['sfax','sousse','tunis']);
             $table->enum('type', ['commerciale', 'technique']);
             $table->timestamps();
         });

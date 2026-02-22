@@ -39,7 +39,6 @@ class DiscountController extends Controller
 
     $discount = Discount::findOrFail($id);
     
-    // إصلاح: التحقق من عدم وجود المقال مسبقاً
     if ($discount->articles()->where('article_id', $request->article_id)->exists()) {
         return response()->json([
             'message' => 'This article is already linked to this discount'
