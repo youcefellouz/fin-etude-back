@@ -12,43 +12,43 @@ import { ApiService } from '../../core/services/api.service';
   imports: [CommonModule, FormsModule],
   template: `
     <div class="container mt-4 mb-5">
-      <h2 class="mb-4"><i class="fas fa-credit-card"></i> إتمام الشراء</h2>
+      <h2 class="mb-4"><i class="fas fa-credit-card"></i> Finaliser la commande</h2>
 
       <div class="row">
         <div class="col-lg-8">
           <!-- Shipping Information -->
           <div class="form-section">
-            <h4><i class="fas fa-map-marker-alt"></i> معلومات الشحن</h4>
+            <h4><i class="fas fa-map-marker-alt"></i> Informations de livraison</h4>
             
             <form>
               <div class="form-row">
                 <div class="form-group">
-                  <label>الاسم الكامل</label>
+                  <label>Nom complet</label>
                   <input type="text" [(ngModel)]="shippingInfo.name" name="name" class="form-control">
                 </div>
                 <div class="form-group">
-                  <label>رقم الهاتف</label>
+                  <label>Numéro de téléphone</label>
                   <input type="tel" [(ngModel)]="shippingInfo.phone" name="phone" class="form-control">
                 </div>
               </div>
 
               <div class="form-group">
-                <label>البريد الإلكتروني</label>
+                <label>Email</label>
                 <input type="email" [(ngModel)]="shippingInfo.email" name="email" class="form-control">
               </div>
 
               <div class="form-group">
-                <label>العنوان</label>
+                <label>Adresse</label>
                 <input type="text" [(ngModel)]="shippingInfo.address" name="address" class="form-control">
               </div>
 
               <div class="form-row">
                 <div class="form-group">
-                  <label>المدينة</label>
+                  <label>Ville</label>
                   <input type="text" [(ngModel)]="shippingInfo.city" name="city" class="form-control">
                 </div>
                 <div class="form-group">
-                  <label>الرمز البريدي</label>
+                  <label>Code Postal</label>
                   <input type="text" [(ngModel)]="shippingInfo.postalCode" name="postalCode" class="form-control">
                 </div>
               </div>
@@ -57,21 +57,21 @@ import { ApiService } from '../../core/services/api.service';
 
           <!-- Shipping Method -->
           <div class="form-section">
-            <h4><i class="fas fa-truck"></i> طريقة الشحن</h4>
+            <h4><i class="fas fa-truck"></i> Méthode de livraison</h4>
             
             <div class="shipping-options">
               <div class="shipping-option">
                 <input type="radio" id="fast" value="fast" [(ngModel)]="shippingMethod" name="shipping">
                 <label for="fast">
-                  <strong>شحن سريع (24 ساعة)</strong>
-                  <p>50 ر.س</p>
+                  <strong>Livraison Express (24h)</strong>
+                  <p>50 €</p>
                 </label>
               </div>
               <div class="shipping-option">
                 <input type="radio" id="standard" value="standard" [(ngModel)]="shippingMethod" name="shipping">
                 <label for="standard">
-                  <strong>شحن عادي (3-5 أيام)</strong>
-                  <p>30 ر.س</p>
+                  <strong>Livraison Standard (3-5 jours)</strong>
+                  <p>30 €</p>
                 </label>
               </div>
             </div>

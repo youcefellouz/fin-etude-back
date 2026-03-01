@@ -12,20 +12,20 @@ import { CartService, CartItem } from '../../core/services/cart.service';
     <div class="container mt-4 mb-5">
       <nav aria-label="breadcrumb">
         <ol class="breadcrumb">
-          <li class="breadcrumb-item"><a href="/">الرئيسية</a></li>
-          <li class="breadcrumb-item active">سلة التسوق</li>
+          <li class="breadcrumb-item"><a href="/">Accueil</a></li>
+          <li class="breadcrumb-item active">Panier</li>
         </ol>
       </nav>
 
       <div class="row">
         <div class="col-lg-8">
           <div class="cart-items-container">
-            <h3 class="mb-4"><i class="fas fa-shopping-cart"></i> سلة التسوق</h3>
+            <h3 class="mb-4"><i class="fas fa-shopping-cart"></i> Mon Panier</h3>
 
             <div *ngIf="cartItems.length === 0" class="alert alert-info text-center">
               <i class="fas fa-inbox"></i>
-              <p>سلة التسوق فارغة</p>
-              <a routerLink="/products" class="btn btn-primary">ابدأ التسوق</a>
+              <p>Votre panier est vide</p>
+              <a routerLink="/products" class="btn btn-primary">Commencer les achats</a>
             </div>
 
             <div *ngIf="cartItems.length > 0">
@@ -37,7 +37,7 @@ import { CartService, CartItem } from '../../core/services/cart.service';
 
                 <div class="item-details">
                   <h5>{{ item.name }}</h5>
-                  <p class="item-price">{{ item.price }} ر.س</p>
+                  <p class="item-price">{{ item.price }} €</p>
                 </div>
 
                 <div class="item-quantity">
@@ -49,7 +49,7 @@ import { CartService, CartItem } from '../../core/services/cart.service';
                 </div>
 
                 <div class="item-total">
-                  {{ item.price * item.quantity }} ر.س
+                  {{ item.price * item.quantity }} €
                 </div>
 
                 <button (click)="removeItem(item.id)" class="btn-remove">
@@ -59,7 +59,7 @@ import { CartService, CartItem } from '../../core/services/cart.service';
 
               <div class="continue-shopping mt-4">
                 <a routerLink="/products" class="btn btn-outline-primary">
-                  <i class="fas fa-arrow-right"></i> متابعة التسوق
+                  <i class="fas fa-arrow-right"></i> Continuer les achats
                 </a>
               </div>
             </div>
@@ -69,15 +69,15 @@ import { CartService, CartItem } from '../../core/services/cart.service';
         <!-- Cart Summary -->
         <div class="col-lg-4">
           <div class="cart-summary">
-            <h4>ملخص الطلب</h4>
+            <h4>Résumé de commande</h4>
 
             <div class="summary-row">
-              <span>عدد المنتجات:</span>
+              <span>Nombre de produits:</span>
               <strong>{{ getCartItemsCount() }}</strong>
             </div>
 
             <div class="summary-row">
-              <span>المجموع الفرعي:</span>
+              <span>Sous-total:</span>
               <strong>{{ getSubtotal() }} ر.س</strong>
             </div>
 

@@ -134,7 +134,7 @@ function translateContent(content) {
 }
 
 // Fichiers à traduire
-const srcDir = path.join(__dirname, '../src');
+const srcDir = '/vercel/share/v0-project/src';
 const tsFiles = getAllFiles(srcDir, '.ts');
 const scssFiles = getAllFiles(srcDir, '.scss');
 

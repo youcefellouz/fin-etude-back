@@ -13,59 +13,59 @@ import { AuthService } from '../../../core/services/auth.service';
       <div class="register-card">
         <div class="register-header">
           <i class="fas fa-user-plus"></i>
-          <h2>إنشاء حساب جديد</h2>
-          <p>انضم إلى Tech Hub</p>
+          <h2>Créer un compte</h2>
+          <p>Rejoignez Tech Hub</p>
         </div>
 
         <form (ngSubmit)="register()" *ngIf="!verificationMode">
           <div class="form-group">
-            <label for="name">الاسم الكامل</label>
+            <label for="name">Nom complet</label>
             <input 
               type="text" 
               id="name"
               [(ngModel)]="name" 
               name="name"
               class="form-control" 
-              placeholder="أدخل اسمك الكامل"
+              placeholder="Entrez votre nom complet"
               required>
           </div>
 
           <div class="form-group">
-            <label for="email">البريد الإلكتروني</label>
+            <label for="email">Email</label>
             <input 
               type="email" 
               id="email"
               [(ngModel)]="email" 
               name="email"
               class="form-control" 
-              placeholder="أدخل بريدك الإلكتروني"
+              placeholder="Entrez votre email"
               required>
           </div>
 
           <div class="form-group">
-            <label for="password">كلمة المرور</label>
+            <label for="password">Mot de passe</label>
             <input 
               type="password" 
               id="password"
               [(ngModel)]="password" 
               name="password"
               class="form-control" 
-              placeholder="كلمة مرور قوية (8 أحرف على الأقل)"
+              placeholder="Mot de passe fort (8 caractères minimum)"
               required>
             <small class="form-text text-muted">
-              يجب أن تحتوي على حرف كبير ورمز (!@#إلخ)
+              Doit contenir une majuscule et un symbole (!@#etc)
             </small>
           </div>
 
           <div class="form-group">
-            <label for="password-confirm">تأكيد كلمة المرور</label>
+            <label for="password-confirm">Confirmer le mot de passe</label>
             <input 
               type="password" 
               id="password-confirm"
               [(ngModel)]="passwordConfirm" 
               name="passwordConfirm"
               class="form-control" 
-              placeholder="أعد إدخال كلمة المرور"
+              placeholder="Confirmez votre mot de passe"
               required>
           </div>
 
@@ -78,9 +78,21 @@ import { AuthService } from '../../../core/services/auth.service';
               class="form-check-input" 
               required>
             <label class="form-check-label" for="terms">
-              أوافق على <a href="#terms">شروط الاستخدام</a>
+              J'accepte les <a href="#" target="_blank">conditions d'utilisation</a>
             </label>
           </div>
+
+          <button type="submit" class="btn btn-primary btn-lg w-100" [disabled]="loading">
+            <span *ngIf="!loading"><i class="fas fa-user-plus"></i> Créer un compte</span>
+            <span *ngIf="loading">
+              <span class="spinner-border spinner-border-sm me-2"></span>Création en cours...
+            </span>
+          </button>
+        </form>
+
+        <div class="register-footer">
+          <p>Vous avez déjà un compte? <a routerLink="/login">Se connecter</a></p>
+        </div>
 
           <button type="submit" class="btn btn-primary btn-lg w-100" [disabled]="loading">
             <span *ngIf="!loading"><i class="fas fa-user-plus"></i> إنشاء حساب</span>
