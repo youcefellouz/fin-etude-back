@@ -1,0 +1,76 @@
+.navbar {
+  background-color: white;
+  border-bottom: 1px solid #e5e7eb;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+
+  .navbar-brand {
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: #2563eb !important;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+
+    i {
+      margin-right: 0.5rem;
+    }
+  }
+
+  .nav-link {
+    color: #1f2937 !important;
+    margin-left: 1rem;
+    transition: all 0.3s ease;
+    font-weight: 500;
+
+    i {
+      margin-left: 0.5rem;
+    }
+
+    &:hover {
+      color: #2563eb !important;
+    }
+
+    &.active {
+      color: #2563eb !important;
+      border-bottom: 2px solid #2563eb;
+    }
+  }
+
+  .cart-item .nav-link {
+    position: relative;
+  }
+
+  .badge-danger {
+    background-color: #ef4444 !important;
+    font-size: 0.7rem;
+    font-weight: 700;
+  }
+
+  .dropdown-menu {
+    border: 1px solid #e5e7eb;
+    border-radius: 0.5rem;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+
+    .dropdown-item {
+      color: #1f2937;
+      transition: all 0.3s ease;
+
+      &:hover {
+        background-color: #f3f4f6;
+        color: #2563eb;
+      }
+    }
+  }
+}
+
+@media (max-width: 768px) {
+  .navbar {
+    .navbar-brand {
+      font-size: 1.25rem;
+    }
+
+    .nav-link {
+      margin-left: 0;
+      margin-bottom: 0.5rem;
+    }
+  }
+}

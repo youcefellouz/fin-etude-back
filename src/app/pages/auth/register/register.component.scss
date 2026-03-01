@@ -1,0 +1,216 @@
+.register-container {
+  min-height: calc(100vh - 200px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: linear-gradient(135deg, #2563eb 0%, #1e40af 100%);
+  padding: 2rem 0;
+
+  .register-card {
+    background: white;
+    border-radius: 0.75rem;
+    box-shadow: 0 10px 40px rgba(0, 0, 0, 0.2);
+    padding: 3rem;
+    width: 100%;
+    max-width: 450px;
+
+    .register-header {
+      text-align: center;
+      margin-bottom: 2rem;
+
+      i {
+        font-size: 3rem;
+        color: #2563eb;
+        margin-bottom: 0.5rem;
+        display: block;
+      }
+
+      h2 {
+        font-size: 1.75rem;
+        font-weight: 700;
+        color: #1f2937;
+        margin-bottom: 0.25rem;
+      }
+
+      p {
+        color: #6b7280;
+        font-size: 1rem;
+      }
+    }
+
+    form {
+      .form-group {
+        margin-bottom: 1.5rem;
+
+        label {
+          display: block;
+          margin-bottom: 0.5rem;
+          font-weight: 600;
+          color: #1f2937;
+        }
+
+        input {
+          width: 100%;
+          padding: 0.75rem 1rem;
+          border: 1px solid #e5e7eb;
+          border-radius: 0.25rem;
+          font-size: 1rem;
+          transition: all 0.3s ease;
+
+          &:focus {
+            outline: none;
+            border-color: #2563eb;
+            box-shadow: 0 0 0 0.2rem rgba(37, 99, 235, 0.25);
+          }
+
+          &::placeholder {
+            color: #9ca3af;
+          }
+        }
+
+        .form-text {
+          display: block;
+          margin-top: 0.25rem;
+          color: #9ca3af;
+          font-size: 0.85rem;
+        }
+      }
+
+      .form-check {
+        margin-bottom: 1.5rem;
+
+        input[type="checkbox"] {
+          width: auto;
+          margin-left: 0.5rem;
+          cursor: pointer;
+
+          &:checked {
+            background-color: #2563eb;
+            border-color: #2563eb;
+          }
+        }
+
+        label {
+          cursor: pointer;
+          color: #6b7280;
+          margin: 0;
+
+          a {
+            color: #2563eb;
+            text-decoration: none;
+
+            &:hover {
+              text-decoration: underline;
+            }
+          }
+        }
+      }
+
+      button[type="submit"] {
+        font-weight: 600;
+        padding: 0.75rem 1.5rem;
+        transition: all 0.3s ease;
+
+        &:hover:not(:disabled) {
+          transform: translateY(-2px);
+          box-shadow: 0 10px 20px rgba(37, 99, 235, 0.3);
+        }
+
+        &:disabled {
+          opacity: 0.7;
+          cursor: not-allowed;
+        }
+
+        i {
+          margin-left: 0.5rem;
+        }
+      }
+
+      button[type="button"] {
+        &.btn-outline-secondary {
+          transition: all 0.3s ease;
+
+          &:hover {
+            transform: translateY(-2px);
+          }
+        }
+
+        &.btn-link {
+          text-decoration: none;
+          color: #2563eb;
+          padding: 0;
+          width: 100%;
+          text-align: center;
+          margin-top: 1rem;
+
+          &:hover {
+            text-decoration: underline;
+          }
+        }
+      }
+
+      .text-muted {
+        color: #9ca3af;
+      }
+    }
+
+    .alert {
+      margin-top: 1rem;
+      border-radius: 0.25rem;
+      border: none;
+
+      &.alert-danger {
+        background-color: #fee2e2;
+        color: #7f1d1d;
+      }
+
+      &.alert-success {
+        background-color: #d1fae5;
+        color: #065f46;
+      }
+    }
+
+    .register-footer {
+      text-align: center;
+      margin-top: 2rem;
+      padding-top: 2rem;
+      border-top: 1px solid #e5e7eb;
+
+      p {
+        color: #6b7280;
+        margin: 0;
+
+        a {
+          color: #2563eb;
+          font-weight: 600;
+          text-decoration: none;
+
+          &:hover {
+            text-decoration: underline;
+          }
+        }
+      }
+    }
+  }
+}
+
+@media (max-width: 768px) {
+  .register-container {
+    padding: 1rem;
+
+    .register-card {
+      padding: 2rem;
+      border-radius: 0.5rem;
+
+      .register-header {
+        i {
+          font-size: 2rem;
+        }
+
+        h2 {
+          font-size: 1.5rem;
+        }
+      }
+    }
+  }
+}

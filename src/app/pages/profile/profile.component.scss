@@ -1,0 +1,151 @@
+.profile-sidebar {
+  background: white;
+  padding: 2rem;
+  border-radius: 0.5rem;
+  border: 1px solid #e5e7eb;
+  text-align: center;
+  position: sticky;
+  top: 20px;
+
+  .profile-avatar {
+    font-size: 4rem;
+    color: #2563eb;
+    margin-bottom: 1rem;
+  }
+
+  h4 {
+    font-weight: 700;
+    color: #1f2937;
+    margin-bottom: 0.5rem;
+  }
+
+  .text-muted {
+    color: #9ca3af;
+    margin-bottom: 1.5rem;
+  }
+
+  .profile-menu {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+
+    .menu-item {
+      padding: 0.75rem 1rem;
+      border-radius: 0.25rem;
+      text-decoration: none;
+      color: #6b7280;
+      transition: all 0.3s ease;
+      display: flex;
+      align-items: center;
+
+      i {
+        margin-left: 0.5rem;
+      }
+
+      &:hover {
+        background-color: #f3f4f6;
+        color: #2563eb;
+      }
+
+      &.active {
+        background-color: #f0f9ff;
+        color: #2563eb;
+        font-weight: 600;
+      }
+
+      &.danger {
+        color: #ef4444;
+
+        &:hover {
+          background-color: #fee2e2;
+        }
+      }
+    }
+  }
+}
+
+.profile-content {
+  background: white;
+  padding: 2rem;
+  border-radius: 0.5rem;
+  border: 1px solid #e5e7eb;
+
+  h3 {
+    font-weight: 700;
+    color: #1f2937;
+    margin-bottom: 2rem;
+    padding-bottom: 1rem;
+    border-bottom: 2px solid #e5e7eb;
+
+    i {
+      margin-left: 0.5rem;
+    }
+  }
+
+  .profile-form {
+    .form-group {
+      margin-bottom: 1.5rem;
+
+      label {
+        display: block;
+        margin-bottom: 0.5rem;
+        font-weight: 600;
+        color: #1f2937;
+      }
+
+      input,
+      textarea {
+        width: 100%;
+        padding: 0.75rem;
+        border: 1px solid #e5e7eb;
+        border-radius: 0.25rem;
+        font-family: inherit;
+
+        &:focus {
+          outline: none;
+          border-color: #2563eb;
+          box-shadow: 0 0 0 0.2rem rgba(37, 99, 235, 0.25);
+        }
+
+        &:disabled {
+          background-color: #f3f4f6;
+          cursor: not-allowed;
+        }
+      }
+    }
+
+    .btn {
+      transition: all 0.3s ease;
+
+      i {
+        margin-left: 0.5rem;
+      }
+
+      &:hover {
+        transform: translateY(-2px);
+      }
+    }
+  }
+
+  .alert {
+    border-radius: 0.25rem;
+    border: none;
+
+    &.alert-success {
+      background-color: #d1fae5;
+      color: #065f46;
+    }
+
+    &.alert-danger {
+      background-color: #fee2e2;
+      color: #7f1d1d;
+    }
+  }
+}
+
+@media (max-width: 768px) {
+  .profile-sidebar {
+    position: static;
+    margin-bottom: 2rem;
+  }
+}
