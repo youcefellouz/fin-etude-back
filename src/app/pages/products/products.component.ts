@@ -12,8 +12,8 @@ import { ApiService } from '../../core/services/api.service';
     <div class="container mt-4">
       <nav aria-label="breadcrumb">
         <ol class="breadcrumb">
-          <li class="breadcrumb-item"><a href="/">الرئيسية</a></li>
-          <li class="breadcrumb-item active">المنتجات</li>
+          <li class="breadcrumb-item"><a href="/">Accueil</a></li>
+          <li class="breadcrumb-item active">Produits</li>
         </ol>
       </nav>
 
@@ -21,18 +21,18 @@ import { ApiService } from '../../core/services/api.service';
         <!-- Sidebar -->
         <div class="col-lg-3 mb-4">
           <div class="filter-card">
-            <h5><i class="fas fa-filter"></i> تصفية المنتجات</h5>
+            <h5><i class="fas fa-filter"></i> Filtrer les produits</h5>
 
             <!-- Search -->
             <div class="filter-section">
-              <label>البحث</label>
+              <label>Recherche</label>
               <input type="text" [(ngModel)]="searchTerm" (change)="filterProducts()" 
-                     class="form-control" placeholder="ابحث عن منتج...">
+                     class="form-control" placeholder="Rechercher un produit...">
             </div>
 
             <!-- Categories -->
             <div class="filter-section">
-              <label><strong>الفئات</strong></label>
+              <label><strong>Catégories</strong></label>
               <div *ngFor="let category of categories">
                 <input type="checkbox" [id]="'cat_' + category.id" 
                        (change)="filterProducts()" class="form-check-input">
@@ -44,7 +44,7 @@ import { ApiService } from '../../core/services/api.service';
 
             <!-- Price Range -->
             <div class="filter-section">
-              <label><strong>السعر</strong></label>
+              <label><strong>Prix</strong></label>
               <div class="price-range">
                 <input type="range" min="0" max="10000" [(ngModel)]="priceRange[0]" 
                        (change)="filterProducts()" class="form-range">
@@ -52,24 +52,24 @@ import { ApiService } from '../../core/services/api.service';
                        (change)="filterProducts()" class="form-range">
               </div>
               <div class="price-display">
-                من {{ priceRange[0] }} إلى {{ priceRange[1] }} ر.س
+                De {{ priceRange[0] }} à {{ priceRange[1] }} €
               </div>
             </div>
 
             <!-- Sort -->
             <div class="filter-section">
-              <label><strong>الترتيب</strong></label>
+              <label><strong>Trier par</strong></label>
               <select [(ngModel)]="sortBy" (change)="filterProducts()" class="form-select">
-                <option value="">الافتراضي</option>
-                <option value="price_asc">السعر (من الأقل إلى الأعلى)</option>
-                <option value="price_desc">السعر (من الأعلى إلى الأقل)</option>
-                <option value="name_asc">الاسم (أ-ي)</option>
-                <option value="name_desc">الاسم (ي-أ)</option>
+                <option value="">Par défaut</option>
+                <option value="price_asc">Prix (croissant)</option>
+                <option value="price_desc">Prix (décroissant)</option>
+                <option value="name_asc">Nom (A-Z)</option>
+                <option value="name_desc">Nom (Z-A)</option>
               </select>
             </div>
 
             <button (click)="resetFilters()" class="btn btn-outline-primary w-100">
-              <i class="fas fa-redo"></i> إعادة تعيين
+              <i class="fas fa-redo"></i> Réinitialiser
             </button>
           </div>
         </div>
@@ -77,7 +77,7 @@ import { ApiService } from '../../core/services/api.service';
         <!-- Products -->
         <div class="col-lg-9">
           <div class="products-header">
-            <h3>المنتجات ({{ filteredProducts.length }})</h3>
+            <h3>Produits ({{ filteredProducts.length }})</h3>
           </div>
 
           <div class="products-grid">

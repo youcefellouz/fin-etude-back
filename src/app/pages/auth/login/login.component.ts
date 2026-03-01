@@ -14,67 +14,67 @@ import { AuthService } from '../../../core/services/auth.service';
         <div class="login-header">
           <i class="fas fa-microchip"></i>
           <h2>Tech Hub</h2>
-          <p>تسجيل الدخول</p>
+          <p>Connexion</p>
         </div>
 
         <form (ngSubmit)="login()" *ngIf="!resetMode">
           <div class="form-group">
-            <label for="email">البريد الإلكتروني</label>
+            <label for="email">Email</label>
             <input 
               type="email" 
               id="email"
               [(ngModel)]="email" 
               name="email"
               class="form-control" 
-              placeholder="أدخل بريدك الإلكتروني"
+              placeholder="Entrez votre email"
               required>
           </div>
 
           <div class="form-group">
-            <label for="password">كلمة المرور</label>
+            <label for="password">Mot de passe</label>
             <input 
               type="password" 
               id="password"
               [(ngModel)]="password" 
               name="password"
               class="form-control" 
-              placeholder="أدخل كلمة المرور"
+              placeholder="Entrez votre mot de passe"
               required>
           </div>
 
           <button type="submit" class="btn btn-primary btn-lg w-100" [disabled]="loading">
-            <span *ngIf="!loading"><i class="fas fa-sign-in-alt"></i> دخول</span>
+            <span *ngIf="!loading"><i class="fas fa-sign-in-alt"></i> Connexion</span>
             <span *ngIf="loading">
-              <span class="spinner-border spinner-border-sm me-2"></span>جاري التحميل...
+              <span class="spinner-border spinner-border-sm me-2"></span>Chargement...
             </span>
           </button>
 
           <button type="button" (click)="toggleReset()" class="btn btn-link btn-block">
-            هل نسيت كلمة المرور؟
+            Mot de passe oublié?
           </button>
         </form>
 
         <!-- Forgot Password Form -->
         <form (ngSubmit)="forgotPassword()" *ngIf="resetMode">
           <div class="form-group">
-            <label for="reset-email">البريد الإلكتروني</label>
+            <label for="reset-email">Email</label>
             <input 
               type="email" 
               id="reset-email"
               [(ngModel)]="resetEmail" 
               name="resetEmail"
               class="form-control" 
-              placeholder="أدخل بريدك الإلكتروني"
+              placeholder="Entrez votre email"
               required>
           </div>
 
           <button type="submit" class="btn btn-primary btn-lg w-100" [disabled]="loading">
-            <span *ngIf="!loading"><i class="fas fa-redo"></i> إرسال كود التحقق</span>
-            <span *ngIf="loading">جاري التحميل...</span>
+            <span *ngIf="!loading"><i class="fas fa-redo"></i> Envoyer le code</span>
+            <span *ngIf="loading">Chargement...</span>
           </button>
 
           <button type="button" (click)="toggleReset()" class="btn btn-link btn-block">
-            العودة إلى التسجيل
+            Retour à la connexion
           </button>
         </form>
 
@@ -87,7 +87,7 @@ import { AuthService } from '../../../core/services/auth.service';
         </div>
 
         <div class="login-footer">
-          <p>ليس لديك حساب؟ <a routerLink="/register">إنشاء حساب جديد</a></p>
+          <p>Pas encore de compte? <a routerLink="/register">Créer un compte</a></p>
         </div>
       </div>
     </div>
@@ -110,7 +110,7 @@ export class LoginComponent {
 
   login(): void {
     if (!this.email || !this.password) {
-      this.error = 'الرجاء ملء جميع الحقول';
+      this.error = 'Veuillez remplir tous les champs';
       return;
     }
 
@@ -124,14 +124,14 @@ export class LoginComponent {
       },
       error: (err) => {
         this.loading = false;
-        this.error = err.error?.message || 'حدث خطأ في التسجيل';
+        this.error = err.error?.message || 'Erreur lors de la connexion';
       }
     });
   }
 
   forgotPassword(): void {
     if (!this.resetEmail) {
-      this.error = 'الرجاء إدخال البريد الإلكتروني';
+      this.error = 'Veuillez entrer votre email';
       return;
     }
 
@@ -141,11 +141,11 @@ export class LoginComponent {
     this.authService.forgotPassword(this.resetEmail).subscribe({
       next: () => {
         this.loading = false;
-        this.success = 'تم إرسال كود التحقق إلى بريدك الإلكتروني';
+        this.success = 'Code de réinitialisation envoyé à votre email';
       },
       error: (err) => {
         this.loading = false;
-        this.error = err.error?.message || 'حدث خطأ';
+        this.error = err.error?.message || 'Une erreur s\'est produite';
       }
     });
   }

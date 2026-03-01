@@ -24,18 +24,18 @@ import { Observable } from 'rxjs';
           <ul class="navbar-nav ms-auto">
             <li class="nav-item">
               <a class="nav-link" routerLink="/" routerLinkActive="active" [routerLinkActiveOptions]="{exact: true}">
-                <i class="fas fa-home"></i> الرئيسية
+                <i class="fas fa-home"></i> Accueil
               </a>
             </li>
             <li class="nav-item">
               <a class="nav-link" routerLink="/products" routerLinkActive="active">
-                <i class="fas fa-laptop"></i> المنتجات
+                <i class="fas fa-laptop"></i> Produits
               </a>
             </li>
 
             <li class="nav-item cart-item">
               <a class="nav-link position-relative" routerLink="/cart">
-                <i class="fas fa-shopping-cart"></i> السلة
+                <i class="fas fa-shopping-cart"></i> Panier
                 <span class="badge position-absolute top-0 start-100 translate-middle badge-danger" 
                       *ngIf="cartCount$ | async as count">
                   {{ count }}
@@ -45,24 +45,24 @@ import { Observable } from 'rxjs';
 
             <li class="nav-item dropdown" *ngIf="(isAuthenticated$ | async)">
               <a class="nav-link dropdown-toggle" href="#" id="userDropdown" role="button" data-bs-toggle="dropdown">
-                <i class="fas fa-user"></i> حسابي
+                <i class="fas fa-user"></i> Mon Compte
               </a>
               <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="userDropdown">
-                <li><a class="dropdown-item" routerLink="/profile">الملف الشخصي</a></li>
-                <li><a class="dropdown-item" routerLink="/orders">طلباتي</a></li>
+                <li><a class="dropdown-item" routerLink="/profile">Profil</a></li>
+                <li><a class="dropdown-item" routerLink="/orders">Mes Commandes</a></li>
                 <li><hr class="dropdown-divider"></li>
-                <li><a class="dropdown-item" (click)="logout()">تسجيل الخروج</a></li>
+                <li><a class="dropdown-item" (click)="logout()">Déconnexion</a></li>
               </ul>
             </li>
 
             <li class="nav-item" *ngIf="!(isAuthenticated$ | async)">
               <a class="nav-link" routerLink="/login">
-                <i class="fas fa-sign-in-alt"></i> دخول
+                <i class="fas fa-sign-in-alt"></i> Connexion
               </a>
             </li>
             <li class="nav-item" *ngIf="!(isAuthenticated$ | async)">
               <a class="nav-link" routerLink="/register">
-                <i class="fas fa-user-plus"></i> تسجيل
+                <i class="fas fa-user-plus"></i> S'inscrire
               </a>
             </li>
           </ul>

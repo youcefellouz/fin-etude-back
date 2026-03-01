@@ -10,10 +10,10 @@ import { ApiService } from '../../core/services/api.service';
   template: `
     <div class="hero-section">
       <div class="hero-content">
-        <h1>متجر معدات الحاسوب الأفضل</h1>
-        <p>أجود المعدات بأفضل الأسعار من أشهر الماركات العالمية</p>
+        <h1>Votre Boutique de Matériel Informatique</h1>
+        <p>Composants de qualité aux meilleurs prix des plus grandes marques mondiales</p>
         <a routerLink="/products" class="btn btn-primary btn-lg">
-          <i class="fas fa-shopping-bag"></i> ابدأ التسوق
+          <i class="fas fa-shopping-bag"></i> Commencer les achats
         </a>
       </div>
     </div>
@@ -21,8 +21,8 @@ import { ApiService } from '../../core/services/api.service';
     <section class="featured-section">
       <div class="container">
         <div class="section-header">
-          <h2>المنتجات المميزة</h2>
-          <p>أفضل المنتجات المختارة بعناية</p>
+          <h2>Produits Vedettes</h2>
+          <p>Nos meilleures sélections de produits</p>
         </div>
 
         <div class="products-grid">
@@ -32,7 +32,7 @@ import { ApiService } from '../../core/services/api.service';
                    [alt]="product.name"
                    (error)="onImageError($event)">
               <div class="product-badge" *ngIf="product.discount">
-                خصم {{ product.discount }}%
+                -{{ product.discount }}%
               </div>
             </div>
             <div class="product-info">
@@ -41,9 +41,9 @@ import { ApiService } from '../../core/services/api.service';
               
               <div class="product-price">
                 <span class="original-price" *ngIf="product.original_price">
-                  {{ product.original_price }} ر.س
+                  {{ product.original_price }} €
                 </span>
-                <span class="current-price">{{ product.price }} ر.س</span>
+                <span class="current-price">{{ product.price }} €</span>
               </div>
 
               <div class="product-rating" *ngIf="product.rating">
@@ -53,7 +53,7 @@ import { ApiService } from '../../core/services/api.service';
 
               <div class="product-actions">
                 <a [routerLink]="['/products', product.id]" class="btn btn-outline-primary">
-                  <i class="fas fa-eye"></i> عرض التفاصيل
+                  <i class="fas fa-eye"></i> Voir les détails
                 </a>
               </div>
             </div>
@@ -65,7 +65,7 @@ import { ApiService } from '../../core/services/api.service';
     <section class="categories-section">
       <div class="container">
         <div class="section-header">
-          <h2>الفئات</h2>
+          <h2>Catégories</h2>
         </div>
         
         <div class="categories-grid">
@@ -74,7 +74,7 @@ import { ApiService } from '../../core/services/api.service';
               <i [class]="getCategoryIcon(category.name)"></i>
             </div>
             <h5>{{ category.name }}</h5>
-            <p>{{ category.description || 'استكشف المنتجات' }}</p>
+            <p>{{ category.description || 'Découvrez les produits' }}</p>
           </div>
         </div>
       </div>
@@ -87,29 +87,29 @@ import { ApiService } from '../../core/services/api.service';
             <div class="feature-icon">
               <i class="fas fa-shipping-fast"></i>
             </div>
-            <h5>شحن سريع</h5>
-            <p>توصيل لجميع أنحاء البلاد في 48 ساعة</p>
+            <h5>Livraison Rapide</h5>
+            <p>Livraison dans toute la France en 48h</p>
           </div>
           <div class="col-md-3 feature">
             <div class="feature-icon">
               <i class="fas fa-shield-alt"></i>
             </div>
-            <h5>منتجات أصلية</h5>
-            <p>100% ضمان على جميع المنتجات</p>
+            <h5>Produits Authentiques</h5>
+            <p>Garantie 100% sur tous les produits</p>
           </div>
           <div class="col-md-3 feature">
             <div class="feature-icon">
               <i class="fas fa-undo"></i>
             </div>
-            <h5>استرجاع آمن</h5>
-            <p>سياسة إرجاع سهلة وآمنة</p>
+            <h5>Retours Sécurisés</h5>
+            <p>Politique de retour simple et sécurisée</p>
           </div>
           <div class="col-md-3 feature">
             <div class="feature-icon">
               <i class="fas fa-headset"></i>
             </div>
-            <h5>دعم العملاء</h5>
-            <p>خدمة عملاء 24/7 للمساعدة</p>
+            <h5>Support Client</h5>
+            <p>Service client 24/7 pour vous aider</p>
           </div>
         </div>
       </div>
@@ -148,13 +148,13 @@ export class HomeComponent implements OnInit {
 
   getCategoryIcon(categoryName: string): string {
     const iconMap: { [key: string]: string } = {
-      'معالجات': 'fas fa-microchip',
-      'ذاكرة': 'fas fa-memory',
-      'أقراص': 'fas fa-hdd',
-      'بطاقات رسومات': 'fas fa-video',
-      'أمدادات طاقة': 'fas fa-power-off',
-      'مبردات': 'fas fa-fan',
-      'أخرى': 'fas fa-laptop'
+      'Processeurs': 'fas fa-microchip',
+      'Mémoire': 'fas fa-memory',
+      'Disques Durs': 'fas fa-hdd',
+      'Cartes Graphiques': 'fas fa-video',
+      'Alimentations': 'fas fa-power-off',
+      'Refroidisseurs': 'fas fa-fan',
+      'Accessoires': 'fas fa-laptop'
     };
     return iconMap[categoryName] || 'fas fa-laptop';
   }
