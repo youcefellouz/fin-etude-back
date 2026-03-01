@@ -39,7 +39,22 @@ class Article extends Model
     {
         return $this->belongsToMany(Station::class, 'stocks')->withPivot('quantity');
     }
-
+    public function stationDistributions()
+{
+    return $this->hasMany(OrderStationStock::class);
+}
+  public function productAnalytics()
+    {
+        return $this->hasOne(ProductAnalytics::class);
+    }
+    public function orderStationStocks()
+{
+    return $this->hasMany(OrderStationStock::class);
+}
+public function repairRequests()
+{
+    return $this->hasMany(RepairRequest::class);
+}
     public function getPriceAfterDiscountAttribute()
     {
         $now = now();
@@ -58,8 +73,8 @@ class Article extends Model
 
         return $this->price;
     }
-    public function productAnalytics()
-    {
-        return $this->hasOne(ProductAnalytics::class);
-    }
+    public function reviews()
+{
+    return $this->hasMany(Review::class);
+}
 }

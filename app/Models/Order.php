@@ -10,7 +10,7 @@ class Order extends Model
         'global_price',
         'status',
         'user_id',
-        'station_id',
+        //'station_id', 
         'guest_name',
         'guest_phone',
     ];
@@ -20,14 +20,15 @@ class Order extends Model
         return $this->belongsTo(User::class);
     }
 
-    public function station()
-    {
-        return $this->belongsTo(Station::class);
-    }
-
     public function articles()
     {
-        return $this->belongsToMany(Article::class, 'order_articles')->withPivot('quantity', 'unit_price');
+        return $this->belongsToMany(Article::class, 'order_articles')
+                    ->withPivot('quantity', 'unit_price');
+    }
+
+    public function stationDistributions()
+    {
+        return $this->hasMany(OrderStationStock::class);
     }
 
     public function calculateGlobalPrice()

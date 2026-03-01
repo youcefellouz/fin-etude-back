@@ -10,9 +10,12 @@ use App\Http\Resources\UserResource;
 use App\Http\Resources\ProfileResource;
 use App\Models\Profile;
 use Illuminate\Support\Facades\Mail;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Str;
 use App\Mail\WelcomeMail;
 use App\Models\PendingUser;
 use App\Mail\VerifyEmailMail;
+use App\Mail\ResetPasswordMail;
 use Carbon\Carbon;
 
 class UserController extends Controller
@@ -27,7 +30,13 @@ class UserController extends Controller
     $request->validate([
         'name'     => 'required|string|max:255',
         'email'    => 'required|email|max:255|unique:users,email',
-        'password' => 'required|string|min:8|confirmed',
+        'password' => [
+            'required', 'string', 'min:8', 'confirmed',
+            'regex:/[A-Z]/',      // au moins une lettre majuscule
+            'regex:/[^a-zA-Z0-9]/' // au moins un symbole (#, @, !, etc.)
+        ],
+    ], [
+        'password.regex' => 'Le mot de passe doit contenir au moins une lettre majuscule et un symbole (ex: #, @, !).',
     ]);
 
     $code = str_pad(random_int(0, 999999), 6, '0', STR_PAD_LEFT);
@@ -40,6 +49,7 @@ class UserController extends Controller
         'password'          => Hash::make($request->password),
         'verification_code' => $code,
         'code_expires_at'   => Carbon::now()->addMinutes(5),
+        'role'              => 'client',
     ]);
 
     Mail::to($request->email)->send(new VerifyEmailMail($code));
@@ -152,6 +162,113 @@ public function resendCode(Request $request)
 
     return response()->json([
         'message' => 'A new verification code has been sent to your email.',
+    ], 200);
+}
+
+// ==================== FORGOT PASSWORD ====================
+
+public function forgotPassword(Request $request)
+{
+    $request->validate([
+        'email' => 'required|email',
+    ]);
+
+    $user = User::where('email', $request->email)->first();
+
+    if (!$user) {
+        return response()->json(['message' => 'Aucun compte trouvé avec cet email.'], 404);
+    }
+
+    $code = str_pad(random_int(0, 999999), 6, '0', STR_PAD_LEFT);
+
+    // Delete any previous reset requests for this email
+    DB::table('password_resets')->where('email', $request->email)->delete();
+
+    DB::table('password_resets')->insert([
+        'email'           => $request->email,
+        'code'            => $code,
+        'reset_token'     => null,
+        'code_expires_at' => Carbon::now()->addMinutes(5),
+        'created_at'      => Carbon::now(),
+        'updated_at'      => Carbon::now(),
+    ]);
+
+    Mail::to($request->email)->send(new ResetPasswordMail($code));
+
+    return response()->json([
+        'message' => 'Un code de vérification a été envoyé à votre email.',
+    ], 200);
+}
+
+public function verifyResetCode(Request $request)
+{
+    $request->validate([
+        'email' => 'required|email',
+        'code'  => 'required|string|size:6',
+    ]);
+
+    $reset = DB::table('password_resets')->where('email', $request->email)->first();
+
+    if (!$reset) {
+        return response()->json(['message' => 'Aucune demande de réinitialisation trouvée pour cet email.'], 404);
+    }
+
+    if (Carbon::now()->isAfter($reset->code_expires_at)) {
+        DB::table('password_resets')->where('email', $request->email)->delete();
+        return response()->json(['message' => 'Le code a expiré. Veuillez refaire une demande.'], 410);
+    }
+
+    if ($reset->code !== $request->code) {
+        return response()->json(['message' => 'Code de vérification invalide.'], 422);
+    }
+
+    $resetToken = Str::uuid()->toString();
+
+    DB::table('password_resets')->where('email', $request->email)->update([
+        'reset_token' => $resetToken,
+        'updated_at'  => Carbon::now(),
+    ]);
+
+    return response()->json([
+        'message'     => 'Code vérifié avec succès.',
+        'reset_token' => $resetToken,
+    ], 200);
+}
+
+public function resetPassword(Request $request)
+{
+    $request->validate([
+        'email'       => 'required|email',
+        'reset_token' => 'required|string',
+        'password'    => [
+            'required', 'string', 'min:8', 'confirmed',
+            'regex:/[A-Z]/',      // au moins une lettre majuscule
+            'regex:/[^a-zA-Z0-9]/' // au moins un symbole (#, @, !, etc.)
+        ],
+    ], [
+        'password.regex' => 'Le mot de passe doit contenir au moins une lettre majuscule et un symbole (ex: #, @, !).',
+    ]);
+
+    $reset = DB::table('password_resets')->where('email', $request->email)->first();
+
+    if (!$reset || $reset->reset_token !== $request->reset_token) {
+        return response()->json(['message' => 'Token invalide ou expiré.'], 422);
+    }
+
+    $user = User::where('email', $request->email)->first();
+
+    if (!$user) {
+        return response()->json(['message' => 'Utilisateur introuvable.'], 404);
+    }
+
+    $user->update([
+        'password' => Hash::make($request->password),
+    ]);
+
+    DB::table('password_resets')->where('email', $request->email)->delete();
+
+    return response()->json([
+        'message' => 'Mot de passe réinitialisé avec succès.',
     ], 200);
 }
 

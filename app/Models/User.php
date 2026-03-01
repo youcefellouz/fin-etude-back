@@ -55,9 +55,17 @@ class User extends Authenticatable
     {
         return $this->hasOne(Profile::class);
     }
-    // علاقة مع CustomerAnalytics
+    public function repairRequests()
+{
+    return $this->hasMany(RepairRequest::class);
+}
+
     public function customerAnalytics()
     {
         return $this->hasOne(CustomerAnalytics::class);
     }
+    public function reviews()
+{
+    return $this->hasMany(Review::class);
+}
 }

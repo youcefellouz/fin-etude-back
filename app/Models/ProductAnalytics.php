@@ -42,40 +42,65 @@ class ProductAnalytics extends Model
         return $this->belongsTo(Article::class);
     }
 
-    public function updateAnalytics()
-    {
-        $article = $this->article;
+   public function updateAnalytics()
+{
+    $article = $this->article;
 
-        $orderArticles = DB::table('order_articles')
-            ->join('orders', 'orders.id', '=', 'order_articles.order_id')
-            ->where('order_articles.article_id', $this->article_id)
-            ->where('orders.status', '!=', 'cancelled')
-            ->select('order_articles.*', 'orders.created_at')
-            ->get();
+    $orderArticles = DB::table('order_articles')
+        ->join('orders', 'orders.id', '=', 'order_articles.order_id')
+        ->where('order_articles.article_id', $this->article_id)
+        ->where('orders.status', '!=', 'cancelled')
+        ->select('order_articles.*', 'orders.created_at')
+        ->get();
 
-        $this->total_sold = $orderArticles->sum('quantity');
-        $this->total_revenue = $orderArticles->sum(function ($item) {
-            return $item->quantity * $item->unit_price;
-        });
+    // ───────────── BASIC METRICS ─────────────
+    $this->total_sold = $orderArticles->sum('quantity');
 
-        $this->sales_last_7_days = $orderArticles->where('created_at', '>=', now()->subDays(7))->sum('quantity');
-        $this->sales_last_30_days = $orderArticles->where('created_at', '>=', now()->subDays(30))->sum('quantity');
+    $this->total_revenue = $orderArticles->sum(function ($item) {
+        return $item->quantity * $item->unit_price;
+    });
 
-        if ($this->times_viewed > 0) {
-            $this->conversion_rate = ($this->total_sold / $this->times_viewed) * 100;
-        }
+    $this->sales_last_7_days = $orderArticles
+        ->where('created_at', '>=', now()->subDays(7))
+        ->sum('quantity');
 
-        $salesLast30to60 = $orderArticles->whereBetween('created_at', [now()->subDays(60), now()->subDays(30)])->sum('quantity');
-        if ($salesLast30to60 > 0) {
-            $this->sales_trend = (($this->sales_last_30_days - $salesLast30to60) / $salesLast30to60) * 100;
-        }
+    $this->sales_last_30_days = $orderArticles
+        ->where('created_at', '>=', now()->subDays(30))
+        ->sum('quantity');
 
-        $this->performance_category = $this->determinePerformanceCategory();
-        $this->needs_promotion = $this->sales_trend < -20 || $this->sales_last_30_days < 5;
-        $this->frequently_bought_with = $this->findFrequentlyBoughtWith();
+    // ───────────── SAFE CONVERSION RATE ─────────────
+    $this->conversion_rate = round(
+        min(
+            $this->times_viewed > 0
+                ? ($this->total_sold / $this->times_viewed) * 100
+                : 0,
+            100 // never exceed 100%
+        ),
+        2
+    );
 
-        $this->save();
+    // ───────────── SALES TREND (Last 30 vs Previous 30 Days) ─────────────
+    $salesLast30to60 = $orderArticles
+        ->whereBetween('created_at', [now()->subDays(60), now()->subDays(30)])
+        ->sum('quantity');
+
+    if ($salesLast30to60 > 0) {
+        $trend = (($this->sales_last_30_days - $salesLast30to60) / $salesLast30to60) * 100;
+        $this->sales_trend = round($trend, 2);
+    } else {
+        $this->sales_trend = 0;
     }
+
+    // ───────────── PERFORMANCE LOGIC ─────────────
+    $this->performance_category = $this->determinePerformanceCategory();
+
+    $this->needs_promotion =
+        $this->sales_trend < -20 || $this->sales_last_30_days < 5;
+
+    $this->frequently_bought_with = $this->findFrequentlyBoughtWith();
+
+    $this->save();
+}
 
     private function determinePerformanceCategory()
     {

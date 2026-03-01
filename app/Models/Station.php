@@ -22,4 +22,16 @@ class Station extends Model
     {
         return $this->hasMany(Order::class);
     }
+    public function orderStationStocks()
+{
+    return $this->hasMany(OrderStationStock::class);
+}
+public function orderDistributions()
+{
+    return $this->hasMany(OrderStationStock::class);
+}
+public function repairRequests()
+{
+    return $this->hasMany(RepairRequest::class);
+}
 }

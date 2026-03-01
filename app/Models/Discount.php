@@ -29,5 +29,5 @@ class Discount extends Model
         return round($this->price * (1 - $discount->value / 100), 2);
     }
     return $this->price;
-}
+}  // hetha na7ih
 }

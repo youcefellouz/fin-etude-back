@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Services\AnalyticsService;
 use App\Services\RecommendationService;
+use App\Services\AIService;
 use App\Models\CustomerAnalytics;
 use App\Models\ProductAnalytics;
 use App\Models\SalesPrediction;
@@ -12,80 +13,104 @@ use Illuminate\Http\Request;
 
 class AnalyticsController extends Controller
 {
-    protected $analyticsService;
-    protected $recommendationService;
+    protected AnalyticsService      $analyticsService;
+    protected RecommendationService $recommendationService;
+    protected AIService             $aiService;
 
-    public function __construct(AnalyticsService $analyticsService, RecommendationService $recommendationService)
-    {
-        $this->analyticsService = $analyticsService;
+    public function __construct(
+        AnalyticsService      $analyticsService,
+        RecommendationService $recommendationService,
+        AIService             $aiService
+    ) {
+        $this->analyticsService      = $analyticsService;
         $this->recommendationService = $recommendationService;
+        $this->aiService             = $aiService;
     }
+
+    // ═════════════════════════════════════════════════════════════════════════
+    // DASHBOARD
+    // ═════════════════════════════════════════════════════════════════════════
 
     public function dashboard()
     {
-        $data = $this->analyticsService->getDashboardData();
-        
-        return response()->json($data);
+        return response()->json($this->analyticsService->getDashboardData());
     }
 
-   public function customerAnalytics(Request $request)
-{
-    // الحصول على user_id من الـ Token
-    $userId = $request->user()->id;
-    
-    $analytics = CustomerAnalytics::where('user_id', $userId)
-        ->latest()
-        ->first();
-    
-    if (!$analytics) {
-        return response()->json([
-            'message' => 'لا توجد تحليلات لك بعد. سيتم تحديثها قريباً!',
-            'user' => [
-                'id' => $userId,
-                'name' => $request->user()->name
-            ]
-        ], 404);
-    }
-    
-    return response()->json([
-        'user' => [
-            'id' => $userId,
-            'name' => $request->user()->name,
-            'email' => $request->user()->email
-        ],
-        'analytics' => $analytics
-    ]);
-}
+    // ═════════════════════════════════════════════════════════════════════════
+    // CUSTOMER ANALYTICS
+    // ═════════════════════════════════════════════════════════════════════════
 
-    public function productAnalytics($articleId)
+    public function customerAnalytics(Request $request)
     {
-        $analytics = ProductAnalytics::where('article_id', $articleId)
-            ->with('article')
-            ->first();
-        
+        $userId    = $request->user()->id;
+        $analytics = CustomerAnalytics::where('user_id', $userId)->latest()->first();
+
         if (!$analytics) {
             return response()->json([
-                'message' => 'لا توجد تحليلات لهذا المنتج بعد'
+                'message' => 'Aucune analyse disponible. Elle sera générée prochainement.',
+                'user'    => ['id' => $userId, 'name' => $request->user()->name],
             ], 404);
         }
 
+        return response()->json([
+            'user'      => [
+                'id'    => $userId,
+                'name'  => $request->user()->name,
+                'email' => $request->user()->email,
+            ],
+            'analytics' => $analytics,
+        ]);
+    }
+
+    public function adminCustomerAnalytics($userId)
+    {
+        // Trigger real-time AI analysis for this customer
+        $analytics = $this->analyticsService->updateCustomerAnalytics((int) $userId);
+
+        if (!$analytics) {
+            return response()->json(['message' => 'Client introuvable'], 404);
+        }
+
+        return response()->json($analytics->load('user:id,name,email'));
+    }
+
+    public function topCustomers(Request $request)
+    {
+        $limit = $request->get('limit', 10);
+        return response()->json(
+            CustomerAnalytics::with('user')->orderByDesc('total_spent')->limit($limit)->get()
+        );
+    }
+
+    // ═════════════════════════════════════════════════════════════════════════
+    // PRODUCT ANALYTICS
+    // ═════════════════════════════════════════════════════════════════════════
+
+    public function productAnalytics($articleId)
+    {
+        $analytics = ProductAnalytics::where('article_id', $articleId)->with('article')->first();
+        if (!$analytics) {
+            return response()->json(['message' => 'Aucune analyse pour ce produit'], 404);
+        }
         return response()->json($analytics);
     }
 
-    public function updateAllAnalytics()
+    public function topProducts(Request $request)
     {
-        $this->analyticsService->updateAllCustomerAnalytics();
-        $this->analyticsService->updateAllProductAnalytics();
-        
-        return response()->json([
-            'message' => 'تم تحديث جميع التحليلات بنجاح'
-        ]);
+        $limit = $request->get('limit', 10);
+        return response()->json(
+            ProductAnalytics::with('article')->orderByDesc('total_sold')->limit($limit)->get()
+        );
     }
+
+    // ═════════════════════════════════════════════════════════════════════════
+    // SALES FORECASTING (AI-Powered)
+    // ═════════════════════════════════════════════════════════════════════════
 
     public function generatePredictions(Request $request)
     {
         $request->validate([
-            'date' => 'required|date',
+            'date'        => 'required|date',
             'period_type' => 'required|in:day,week,month',
         ]);
 
@@ -95,191 +120,164 @@ class AnalyticsController extends Controller
         );
 
         if (!$prediction) {
-            return response()->json([
-                'message' => 'لا توجد بيانات كافية لإنشاء التوقعات'
-            ], 400);
+            return response()->json(['message' => 'Données insuffisantes pour générer des prévisions'], 400);
         }
 
         return response()->json($prediction, 201);
     }
 
+    /**
+     * AI-powered 7-day detailed forecast with category breakdown.
+     */
+    public function detailedForecast(Request $request)
+    {
+        $days   = $request->get('days', 7);
+        $result = $this->analyticsService->generateDetailedForecast($days);
+
+        if (!$result) {
+            return response()->json(['message' => 'Données insuffisantes'], 400);
+        }
+
+        return response()->json($result);
+    }
+
+    /**
+     * Forecast model accuracy metrics (walk-forward validation).
+     */
+    public function forecastAccuracy()
+    {
+        $dailySales = $this->analyticsService->getDailySalesHistory(90);
+
+        if (count($dailySales) < 10) {
+            return response()->json(['message' => 'Moins de 10 jours de données disponibles'], 400);
+        }
+
+        $result = $this->aiService->forecastAccuracy($dailySales);
+        return response()->json($result ?? ['message' => 'AI service unavailable']);
+    }
+
     public function getPredictions(Request $request)
     {
         $query = SalesPrediction::query();
+        if ($request->boolean('future_only'))  $query->future();
+        if ($request->has('period_type'))      $query->where('period_type', $request->period_type);
 
-        if ($request->has('future_only') && $request->future_only) {
-            $query->future();
-        }
-
-        if ($request->has('period_type')) {
-            $query->where('period_type', $request->period_type);
-        }
-
-        $predictions = $query->orderBy('prediction_date', 'desc')->get();
-
-        return response()->json($predictions);
+        return response()->json($query->orderBy('prediction_date', 'desc')->get());
     }
+
+    // ═════════════════════════════════════════════════════════════════════════
+    // PATTERN DETECTION + ALERTS
+    // ═════════════════════════════════════════════════════════════════════════
 
     public function detectPatterns()
     {
         $alerts = $this->analyticsService->detectPatterns();
-        
         return response()->json([
-            'message' => 'تم كشف الأنماط وإنشاء التنبيهات',
-            'alerts_created' => count($alerts)
+            'message'       => 'Détection de modèles terminée',
+            'alerts_created' => count($alerts),
         ]);
     }
 
     public function getAlerts(Request $request)
     {
         $query = SmartAlert::query();
+        if ($request->boolean('unread_only'))    $query->unread();
+        if ($request->boolean('unresolved_only')) $query->unresolved();
+        if ($request->has('severity'))            $query->bySeverity($request->severity);
 
-        if ($request->has('unread_only') && $request->unread_only) {
-            $query->unread();
-        }
-
-        if ($request->has('unresolved_only') && $request->unresolved_only) {
-            $query->unresolved();
-        }
-
-        if ($request->has('severity')) {
-            $query->bySeverity($request->severity);
-        }
-
-        $alerts = $query->orderByDesc('importance_score')
-            ->orderByDesc('created_at')
-            ->get();
-
-        return response()->json($alerts);
+        return response()->json(
+            $query->orderByDesc('importance_score')->orderByDesc('created_at')->get()
+        );
     }
 
     public function markAlertAsRead($alertId)
     {
-        $alert = SmartAlert::findOrFail($alertId);
-        $alert->markAsRead();
-
-        return response()->json([
-            'message' => 'تم تعليم التنبيه كمقروء'
-        ]);
+        SmartAlert::findOrFail($alertId)->markAsRead();
+        return response()->json(['message' => 'Alerte marquée comme lue']);
     }
 
     public function resolveAlert(Request $request, $alertId)
     {
-        $request->validate([
-            'resolution_note' => 'nullable|string',
-        ]);
-
-        $alert = SmartAlert::findOrFail($alertId);
-        $alert->markAsResolved($request->resolution_note);
-
-        return response()->json([
-            'message' => 'تم تعليم التنبيه كمحلول'
-        ]);
+        $request->validate(['resolution_note' => 'nullable|string']);
+        SmartAlert::findOrFail($alertId)->markAsResolved($request->resolution_note);
+        return response()->json(['message' => 'Alerte résolue']);
     }
+
+    // ═════════════════════════════════════════════════════════════════════════
+    // RECOMMENDATIONS
+    // ═════════════════════════════════════════════════════════════════════════
 
     public function getProductRecommendations($articleId)
     {
-        $recommendations = $this->recommendationService->getFrequentlyBoughtTogether($articleId);
-        
+        $recommendations = $this->recommendationService->getFrequentlyBoughtTogether((int) $articleId);
         return response()->json($recommendations);
     }
 
+    public function getSimilarProducts($articleId)
+    {
+        $similar = $this->recommendationService->getSimilarProducts((int) $articleId);
+        return response()->json($similar);
+    }
+
     public function getPersonalizedRecommendations(Request $request)
-{
-    // الحصول على user_id من الـ Token
-    $userId = $request->user()->id;
-    
-    $recommendations = $this->recommendationService
-        ->getPersonalizedRecommendations($userId);
-    
-    return response()->json([
-        'user' => [
-            'id' => $userId,
-            'name' => $request->user()->name,
-            'email' => $request->user()->email
-        ],
-        'recommendations' => $recommendations
-    ]);
-}
+    {
+        $user            = $request->user();
+        $recommendations = $this->recommendationService->getPersonalizedRecommendations($user->id);
+
+        return response()->json([
+            'user'            => ['id' => $user->id, 'name' => $user->name, 'email' => $user->email],
+            'recommendations' => $recommendations,
+        ]);
+    }
+
+    public function getTrendingProducts()
+    {
+        return response()->json($this->recommendationService->getTrendingProducts(10));
+    }
 
     public function recommendationPerformance()
     {
-        $performance = $this->recommendationService->getRecommendationPerformance();
-        
-        return response()->json($performance);
+        return response()->json($this->recommendationService->getRecommendationPerformance());
     }
 
-    public function topCustomers(Request $request)
+    // ═════════════════════════════════════════════════════════════════════════
+    // OPERATIONS
+    // ═════════════════════════════════════════════════════════════════════════
+
+    public function updateAllAnalytics()
     {
-        $limit = $request->get('limit', 10);
-        
-        $topCustomers = CustomerAnalytics::with('user')
-            ->orderByDesc('total_spent')
-            ->limit($limit)
-            ->get();
-
-        return response()->json($topCustomers);
-    }
-
-    public function topProducts(Request $request)
-    {
-        $limit = $request->get('limit', 10);
-        
-        $topProducts = ProductAnalytics::with('article')
-            ->orderByDesc('total_sold')
-            ->limit($limit)
-            ->get();
-
-        return response()->json($topProducts);
+        $this->analyticsService->updateAllCustomerAnalytics();
+        $this->analyticsService->updateAllProductAnalytics();
+        return response()->json(['message' => 'Toutes les analyses ont été mises à jour']);
     }
 
     public function salesReport(Request $request)
     {
         $startDate = $request->get('start_date', now()->subDays(30));
-        $endDate = $request->get('end_date', now());
+        $endDate   = $request->get('end_date', now());
 
         $orders = \App\Models\Order::whereBetween('created_at', [$startDate, $endDate])
-            ->where('status', '!=', 'cancelled')
-            ->get();
+            ->where('status', '!=', 'cancelled')->get();
 
-        $report = [
-            'period' => [
-                'start' => $startDate,
-                'end' => $endDate,
-            ],
-            'total_revenue' => $orders->sum('global_price'),
-            'total_orders' => $orders->count(),
-            'average_order_value' => $orders->avg('global_price'),
-            'daily_breakdown' => $this->getDailyBreakdown($orders),
-        ];
-
-        return response()->json($report);
-    }
-
-    private function getDailyBreakdown($orders)
-    {
-        return $orders->groupBy(function ($order) {
-            return $order->created_at->format('Y-m-d');
-        })->map(function ($dayOrders) {
-            return [
-                'revenue' => $dayOrders->sum('global_price'),
-                'orders' => $dayOrders->count(),
-            ];
-        });
-    }
-    public function adminCustomerAnalytics($userId)
-{
-    $analytics = CustomerAnalytics::where('user_id', $userId)
-        ->with('user:id,name,email')
-        ->latest()
-        ->first();
-    
-    if (!$analytics) {
         return response()->json([
-            'message' => 'لا توجد تحليلات لهذا العميل بعد'
-        ], 404);
+            'period'          => ['start' => $startDate, 'end' => $endDate],
+            'total_revenue'   => $orders->sum('global_price'),
+            'total_orders'    => $orders->count(),
+            'average_order_value' => $orders->avg('global_price'),
+            'daily_breakdown' => $orders->groupBy(fn($o) => $o->created_at->format('Y-m-d'))
+                ->map(fn($d) => ['revenue' => $d->sum('global_price'), 'orders' => $d->count()]),
+        ]);
     }
-    
-    return response()->json($analytics);
-}
+
+    /**
+     * Check AI service health.
+     */
+    public function aiStatus()
+    {
+        $alive = $this->aiService->isAlive();
+        return response()->json([
+            'status'  => $alive ? 'online' : 'offline',
+            'url'     => config('services.ai.url', env('AI_SERVICE_URL', 'http://localhost:8001')),
+        ]);
+    }
 }

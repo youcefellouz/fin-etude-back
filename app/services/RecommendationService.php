@@ -5,137 +5,216 @@ namespace App\Services;
 use App\Models\Article;
 use App\Models\ProductAnalytics;
 use App\Models\CustomerAnalytics;
-use App\Models\Order;
 use App\Models\RecommendationLog;
 use Illuminate\Support\Facades\DB;
 
 class RecommendationService
 {
-    public function getFrequentlyBoughtTogether($articleId, $limit = 5)
+    protected AIService $ai;
+
+    public function __construct(AIService $ai)
     {
+        $this->ai = $ai;
+    }
+
+    /**
+     * Hybrid personalized recommendations for a user.
+     * Uses AI collaborative filtering + content-based fallback.
+     */
+    public function getPersonalizedRecommendations(int $userId, int $limit = 10): array
+    {
+        $allPurchases = $this->getAllPurchasesPayload();
+        $articles     = $this->getArticlesPayload();
+
+        $result = $this->ai->personalizedRecommendations($userId, $allPurchases, $articles, $limit);
+
+        if ($result && !empty($result['recommendations'])) {
+            $articleIds      = array_column($result['recommendations'], 'article_id');
+            $scoresByArticle = array_column($result['recommendations'], 'score', 'article_id');
+
+            $recommended = Article::whereIn('id', $articleIds)->get()
+                ->sortBy(fn($a) => -($scoresByArticle[$a->id] ?? 0))
+                ->values();
+
+            // Log the recommendation
+            $this->logRecommendation(
+                $userId, null, $recommended,
+                'personalized', $result['algorithm'] ?? 'hybrid'
+            );
+
+            return $recommended->toArray();
+        }
+
+        // Fallback: trending products
+        return $this->getTrendingProducts($limit)->toArray();
+    }
+
+    /**
+     * Items frequently bought together via Association Rules.
+     */
+    public function getFrequentlyBoughtTogether(int $articleId, int $limit = 5): array
+    {
+        // Try AI association rules first
+        $orders = $this->getOrdersPayload();
+
+        if (!empty($orders)) {
+            $result = $this->ai->associationRules($orders, 0.05, 0.2);
+
+            if ($result && !empty($result['rules'])) {
+                $relatedIds = [];
+                foreach ($result['rules'] as $rule) {
+                    if ($rule['antecedent'] == $articleId) {
+                        $relatedIds[] = $rule['consequent'];
+                    } elseif ($rule['consequent'] == $articleId) {
+                        $relatedIds[] = $rule['antecedent'];
+                    }
+                    if (count($relatedIds) >= $limit) break;
+                }
+
+                if (!empty($relatedIds)) {
+                    return Article::whereIn('id', $relatedIds)->get()->toArray();
+                }
+            }
+        }
+
+        // Fallback: product analytics frequently_bought_with
         $analytics = ProductAnalytics::where('article_id', $articleId)->first();
-        
-        if (!$analytics || empty($analytics->frequently_bought_with)) {
-            return $this->getFallbackRecommendations($articleId, $limit);
+        if ($analytics && !empty($analytics->frequently_bought_with)) {
+            $ids = array_slice($analytics->frequently_bought_with, 0, $limit);
+            return Article::whereIn('id', $ids)->get()->toArray();
         }
 
-        $recommendedIds = array_slice($analytics->frequently_bought_with, 0, $limit);
-        
-        return Article::whereIn('id', $recommendedIds)->get();
+        return $this->getFallbackRecommendations($articleId, $limit)->toArray();
     }
 
-    public function getPersonalizedRecommendations($userId, $limit = 10)
+    /**
+     * Similar products via item-based collaborative filtering.
+     */
+    public function getSimilarProducts(int $articleId, int $limit = 5): array
     {
-        $customerAnalytics = CustomerAnalytics::where('user_id', $userId)->first();
-        
-        if (!$customerAnalytics) {
-            return $this->getTrendingProducts($limit);
+        $allPurchases = $this->getAllPurchasesPayload();
+        $articles     = $this->getArticlesPayload();
+
+        $result = $this->ai->similarProducts($articleId, $allPurchases, $articles, $limit);
+
+        if ($result && !empty($result['recommendations'])) {
+            $ids = array_column($result['recommendations'], 'article_id');
+            return Article::whereIn('id', $ids)->get()->toArray();
         }
 
-        $favoriteCategories = $customerAnalytics->favorite_categories ?? [];
-        $favoriteBrands = $customerAnalytics->favorite_brands ?? [];
-
-        $query = Article::query();
-
-        if (!empty($favoriteCategories)) {
-            $query->whereIn('category_id', $favoriteCategories);
-        }
-
-        if (!empty($favoriteBrands)) {
-            $query->orWhereIn('brand_id', $favoriteBrands);
-        }
-
-        $purchasedArticleIds = DB::table('order_articles')
-            ->join('orders', 'orders.id', '=', 'order_articles.order_id')
-            ->where('orders.user_id', $userId)
-            ->pluck('order_articles.article_id')
-            ->unique();
-
-        if ($purchasedArticleIds->isNotEmpty()) {
-            $query->whereNotIn('id', $purchasedArticleIds);
-        }
-
-        return $query->inRandomOrder()->limit($limit)->get();
-    }
-
-    public function getTrendingProducts($limit = 10)
-    {
-        $trendingAnalytics = ProductAnalytics::where('performance_category', 'trending')
-            ->orWhere('performance_category', 'bestseller')
-            ->orderByDesc('sales_trend')
-            ->limit($limit)
-            ->get();
-
-        $articleIds = $trendingAnalytics->pluck('article_id');
-        
-        return Article::whereIn('id', $articleIds)->get();
-    }
-
-    public function getSimilarProducts($articleId, $limit = 5)
-    {
-        $article = Article::findOrFail($articleId);
-        
+        // Fallback: same category
+        $article = Article::find($articleId);
+        if (!$article) return [];
         return Article::where('category_id', $article->category_id)
             ->where('id', '!=', $articleId)
-            ->whereHas('productAnalytics', function ($query) {
-                $query->where('performance_category', '!=', 'dead_stock');
-            })
-            ->inRandomOrder()
-            ->limit($limit)
-            ->get();
+            ->inRandomOrder()->limit($limit)->get()->toArray();
     }
 
-    private function getFallbackRecommendations($articleId, $limit)
+    /**
+     * Trending + bestseller products.
+     */
+    public function getTrendingProducts(int $limit = 10)
     {
-        $article = Article::findOrFail($articleId);
-        
-        return Article::where('category_id', $article->category_id)
-            ->where('id', '!=', $articleId)
-            ->inRandomOrder()
-            ->limit($limit)
-            ->get();
+        $analytics = ProductAnalytics::whereIn('performance_category', ['trending', 'bestseller'])
+            ->orderByDesc('sales_trend')->limit($limit)->get();
+
+        $ids = $analytics->pluck('article_id');
+        return Article::whereIn('id', $ids)->get();
     }
 
-    public function logRecommendation($userId, $sourceArticleId, $recommendedArticles, $type, $algorithm)
+    /**
+     * Get recommendation performance metrics.
+     */
+    public function getRecommendationPerformance(): array
     {
-        $recommendedData = $recommendedArticles->map(function ($article) {
-            return [
-                'id' => $article->id,
-                'name' => $article->name,
-                'price' => $article->price,
-            ];
-        })->toArray();
+        $total     = RecommendationLog::count();
+        $clicked   = RecommendationLog::where('was_clicked',    true)->count();
+        $purchased = RecommendationLog::where('was_purchased',  true)->count();
+
+        $ctr = $total > 0 ? round($clicked   / $total * 100, 2) : 0;
+        $cvr = $total > 0 ? round($purchased / $total * 100, 2) : 0;
+
+        return [
+            'total_recommendations' => $total,
+            'clicked'               => $clicked,
+            'purchased'             => $purchased,
+            'click_through_rate'    => $ctr,
+            'conversion_rate'       => $cvr,
+            'by_algorithm'          => RecommendationLog::selectRaw('algorithm_used, COUNT(*) as total, SUM(was_clicked) as clicks, SUM(was_purchased) as purchases')
+                ->groupBy('algorithm_used')->get(),
+        ];
+    }
+
+    /**
+     * Log a recommendation event.
+     */
+    public function logRecommendation(?int $userId, ?int $sourceArticleId, $articles, string $type, string $algorithm): ?RecommendationLog
+    {
+        $data = collect($articles)->map(fn($a) => [
+            'id'    => is_array($a) ? $a['id'] : $a->id,
+            'name'  => is_array($a) ? $a['name'] : $a->name,
+            'price' => is_array($a) ? $a['price'] : $a->price,
+        ])->toArray();
 
         return RecommendationLog::create([
-            'user_id' => $userId,
-            'session_id' => session()->getId(),
-            'source_article_id' => $sourceArticleId,
-            'recommended_articles' => $recommendedData,
-            'recommendation_type' => $type,
-            'algorithm_used' => $algorithm,
+            'user_id'               => $userId,
+            'session_id'            => session()->getId(),
+            'source_article_id'     => $sourceArticleId,
+            'recommended_articles'  => $data,
+            'recommendation_type'   => $type,
+            'algorithm_used'        => $algorithm,
         ]);
     }
 
-    public function getRecommendationPerformance()
+    // ─── Data preparation helpers ─────────────────────────────────────────────
+
+    private function getAllPurchasesPayload(): array
     {
-        $totalRecommendations = RecommendationLog::count();
-        $clickedRecommendations = RecommendationLog::where('was_clicked', true)->count();
-        $purchasedRecommendations = RecommendationLog::where('was_purchased', true)->count();
+        return DB::table('order_articles')
+            ->join('orders', 'orders.id', '=', 'order_articles.order_id')
+            ->where('orders.status', '!=', 'cancelled')
+            ->whereNotNull('orders.user_id')
+            ->select('orders.user_id', 'order_articles.article_id', 'order_articles.quantity')
+            ->get()
+            ->map(fn($row) => [
+                'user_id'    => $row->user_id,
+                'article_id' => $row->article_id,
+                'quantity'   => $row->quantity,
+            ])->toArray();
+    }
 
-        $clickThroughRate = $totalRecommendations > 0 
-            ? ($clickedRecommendations / $totalRecommendations) * 100 
-            : 0;
+    private function getArticlesPayload(): array
+    {
+        return Article::with('productAnalytics')->get()->map(fn($a) => [
+            'article_id'  => $a->id,
+            'category_id' => $a->category_id,
+            'brand_id'    => $a->brand_id,
+            'price'       => (float) $a->price,
+            'total_sold'  => $a->productAnalytics?->total_sold ?? 0,
+        ])->toArray();
+    }
 
-        $conversionRate = $totalRecommendations > 0 
-            ? ($purchasedRecommendations / $totalRecommendations) * 100 
-            : 0;
+    private function getOrdersPayload(): array
+    {
+        $orders = DB::table('order_articles')
+            ->join('orders', 'orders.id', '=', 'order_articles.order_id')
+            ->where('orders.status', '!=', 'cancelled')
+            ->select('order_articles.order_id', 'order_articles.article_id')
+            ->get()
+            ->groupBy('order_id');
 
-        return [
-            'total_recommendations' => $totalRecommendations,
-            'clicked' => $clickedRecommendations,
-            'purchased' => $purchasedRecommendations,
-            'click_through_rate' => round($clickThroughRate, 2),
-            'conversion_rate' => round($conversionRate, 2),
-        ];
+        return $orders->map(fn($items, $orderId) => [
+            'order_id'    => $orderId,
+            'article_ids' => $items->pluck('article_id')->unique()->values()->toArray(),
+        ])->values()->toArray();
+    }
+
+    private function getFallbackRecommendations(int $articleId, int $limit)
+    {
+        $article = Article::find($articleId);
+        if (!$article) return collect();
+        return Article::where('category_id', $article->category_id)
+            ->where('id', '!=', $articleId)
+            ->inRandomOrder()->limit($limit)->get();
     }
 }

@@ -10,10 +10,17 @@ use Illuminate\Support\Facades\Auth;
 
 class ProfileController extends Controller
 {
-     public function index(){ 
-        $profiles=Profile::all();
-        return response()->json($profiles);
+     public function index()
+{
+    $user_id = Auth::user()->id;
+    $profile = Profile::where('user_id', $user_id)->first();
+
+    if (!$profile) {
+        return response()->json(['message' => 'No profile found'], 404);
     }
+
+    return response()->json($profile);
+}
      public function store(StoreProfileRequest $request){ 
        $user_id=Auth::user()->id;
        $validateddata=$request->validated();
@@ -33,11 +40,18 @@ class ProfileController extends Controller
        $profile->update($request->validated()); 
        return response()->json($profile,202); 
   }
-   public function destroy($id){ 
-       $profile=Profile::findOrFail($id);
-      $profile->delete();
-        return response()->json(null,204); 
+   public function destroy($id)
+{
+    $user_id = Auth::user()->id;
+    $profile = Profile::findOrFail($id);
+
+    if ($profile->user_id != $user_id) {
+        return response()->json(['message' => 'Unauthorized'], 403);
     }
+
+    $profile->delete();
+    return response()->json(null, 204);
+}
       public function show ($id){ 
         $user_id=Auth::user()->id;
         $profile=Profile::findOrFail($id);

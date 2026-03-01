@@ -10,6 +10,12 @@ use App\Models\Article;
 use App\Models\Station;
 use App\Models\Order;
 use App\Models\Discount;
+use App\Models\Stock;
+use App\Models\OrderStationStock;
+use App\Models\CustomerAnalytics;
+use App\Models\ProductAnalytics;
+use App\Models\UserActivityLog;
+use App\Models\RecommendationLog;
 
 class AnalyticsTestDataSeeder extends Seeder
 {
@@ -17,9 +23,8 @@ class AnalyticsTestDataSeeder extends Seeder
     {
         $this->command->info('🚀 بدء إنشاء البيانات التجريبية...');
 
-        // إنشاء فئات إضافية
+        // ─── 1. CATEGORIES ────────────────────────────────────────────────────
         $categories = ['Electronics', 'Clothing', 'Books', 'Home & Garden', 'Sports', 'Toys', 'Beauty'];
-        
         foreach ($categories as $cat) {
             if (!Category::where('name', $cat)->exists()) {
                 Category::create(['name' => $cat]);
@@ -27,9 +32,8 @@ class AnalyticsTestDataSeeder extends Seeder
         }
         $this->command->info('✅ تم إنشاء الفئات');
 
-        // إنشاء علامات تجارية
+        // ─── 2. BRANDS ───────────────────────────────────────────────────────
         $brands = ['Samsung', 'Apple', 'Nike', 'Adidas', 'Sony', 'LG', 'HP', 'Dell'];
-        
         foreach ($brands as $brand) {
             if (!Brand::where('name', $brand)->exists()) {
                 Brand::create(['name' => $brand]);
@@ -37,14 +41,12 @@ class AnalyticsTestDataSeeder extends Seeder
         }
         $this->command->info('✅ تم إنشاء العلامات التجارية');
 
-        // إنشاء محطات
-        // تصحيح القيم لتتوافق مع الـ enum في قاعدة البيانات
+        // ─── 3. STATIONS ─────────────────────────────────────────────────────
         $stations = [
-            ['name' => 'Station Tunis', 'location' => 'Avenue Habib Bourguiba', 'city' => 'tunis', 'type' => 'commerciale', 'status' => 'active'],
-            ['name' => 'Station Sfax', 'location' => 'Centre Ville', 'city' => 'sfax', 'type' => 'commerciale', 'status' => 'active'],
-            ['name' => 'Station Sousse', 'location' => 'Port El Kantaoui', 'city' => 'sousse', 'type' => 'technique', 'status' => 'active'],
+            ['name' => 'Station Tunis',  'location' => 'Avenue Habib Bourguiba', 'city' => 'tunis',  'type' => 'commerciale', 'status' => 'active'],
+            ['name' => 'Station Sfax',   'location' => 'Centre Ville',           'city' => 'sfax',   'type' => 'commerciale', 'status' => 'active'],
+            ['name' => 'Station Sousse', 'location' => 'Port El Kantaoui',       'city' => 'sousse', 'type' => 'technique',   'status' => 'active'],
         ];
-        
         foreach ($stations as $station) {
             if (!Station::where('name', $station['name'])->exists()) {
                 Station::create($station);
@@ -52,108 +54,219 @@ class AnalyticsTestDataSeeder extends Seeder
         }
         $this->command->info('✅ تم إنشاء المحطات');
 
-        // إنشاء مستخدمين
+        // ─── 4. USERS ────────────────────────────────────────────────────────
         $this->command->info('📝 إنشاء مستخدمين...');
         for ($i = 1; $i <= 50; $i++) {
             if (!User::where('email', "testuser$i@example.com")->exists()) {
                 User::create([
-                    'name' => "Test User $i",
-                    'email' => "testuser$i@example.com",
+                    'name'     => "Test User $i",
+                    'email'    => "testuser$i@example.com",
                     'password' => bcrypt('password123'),
+                    'role'     => 'client',   // ✅ إضافة role
                 ]);
             }
         }
         $this->command->info('✅ تم إنشاء 50 مستخدم');
 
-        // إنشاء منتجات وتوزيع المخزون
+        // ─── 5. ARTICLES + STOCKS ────────────────────────────────────────────
         $this->command->info('📦 إنشاء منتجات وتوزيع المخزون...');
-        $categoryIds = Category::pluck('id')->toArray();
-        $brandIds = Brand::pluck('id')->toArray();
+        $categoryIds   = Category::pluck('id')->toArray();
+        $brandIds      = Brand::pluck('id')->toArray();
         $allStationIds = Station::pluck('id')->toArray();
 
         for ($i = 1; $i <= 100; $i++) {
             $article = Article::create([
-                'name' => "Product Test $i",
+                'name'        => "Product Test $i",
                 'description' => "This is a test product number $i with detailed description",
-                'price' => rand(20, 800),
+                'price'       => rand(20, 800),
                 'category_id' => $categoryIds[array_rand($categoryIds)],
-                'brand_id' => $brandIds[array_rand($brandIds)],
+                'brand_id'    => $brandIds[array_rand($brandIds)],
             ]);
 
-            // إضافة مخزون للمنتج في جميع المحطات لضمان توفره للطلبات
+            // إضافة مخزون في كل المحطات
             foreach ($allStationIds as $stationId) {
-                $article->stations()->attach(
-                    $stationId, 
-                    ['quantity' => rand(50, 200)] // كمية كافية لتجنب أخطاء المخزون أثناء الـ seeding
-                );
+                $article->stations()->attach($stationId, [
+                    'quantity' => rand(50, 200),
+                ]);
             }
         }
         $this->command->info('✅ تم إنشاء 100 منتج مع مخزون في كل المحطات');
 
-        // إنشاء خصومات
+        // ─── 6. DISCOUNTS ────────────────────────────────────────────────────
         $this->command->info('💰 إنشاء خصومات...');
         for ($i = 1; $i <= 15; $i++) {
             $discount = Discount::create([
-                'type' => 'percentage',
-                'value' => rand(5, 40),
+                'type'       => 'percentage',
+                'value'      => rand(5, 40),
                 'start_date' => now()->subDays(rand(1, 20)),
-                'end_date' => now()->addDays(rand(10, 60)),
+                'end_date'   => now()->addDays(rand(10, 60)),
             ]);
-
             $articleIds = Article::inRandomOrder()->limit(rand(5, 15))->pluck('id');
             $discount->articles()->attach($articleIds);
         }
         $this->command->info('✅ تم إنشاء 15 خصم');
 
-        // إنشاء طلبات متنوعة
+        // ─── 7. ORDERS ───────────────────────────────────────────────────────
         $this->command->info('🛒 إنشاء طلبات...');
-        $userIds = User::pluck('id')->toArray();
+        $userIds    = User::where('role', 'client')->pluck('id')->toArray();
         $articleIds = Article::pluck('id')->toArray();
-        $statuses = ['pending', 'confirmed', 'cancelled'];
+        $statuses   = ['pending', 'confirmed', 'cancelled'];
 
         for ($i = 1; $i <= 200; $i++) {
-            $user = User::find($userIds[array_rand($userIds)]);
-            // اختيار محطة عشوائية للطلب
+            $userId    = $userIds[array_rand($userIds)];
             $stationId = $allStationIds[array_rand($allStationIds)];
-            
+
             $order = Order::create([
-                'user_id' => $user->id,
-                'station_id' => $stationId, // ربط الطلب بمحطة
-                'status' => $statuses[array_rand($statuses)],
+                'user_id'      => $userId,
+                'status'       => $statuses[array_rand($statuses)],
                 'global_price' => 0,
-                'created_at' => now()->subDays(rand(0, 90)),
+                'created_at'   => now()->subDays(rand(0, 90)),
+                'updated_at'   => now()->subDays(rand(0, 90)),
             ]);
 
-            // إضافة منتجات للطلب وإنقاص المخزون يدوياً (لأن الـ Seeder قد لا يمر عبر الـ Controller)
             $numArticles = rand(1, 6);
-            $orderTotal = 0;
+            $orderTotal  = 0;
 
             for ($j = 0; $j < $numArticles; $j++) {
-                $article = Article::find($articleIds[array_rand($articleIds)]);
-                $quantity = rand(1, 4);
-                
-                // حساب السعر (افتراضاً بدون خصم للتبسيط أو يمكن استخدام price_after_discount)
-                // هنا نستخدم السعر الأساسي للسرعة، أو يمكن جلب السعر بعد الخصم إذا كان الموديل يدعمه
-                $unitPrice = $article->price; 
+                $article   = Article::find($articleIds[array_rand($articleIds)]);
+                $quantity  = rand(1, 4);
+                $unitPrice = $article->price;
 
+                // ربط المنتج بالطلب
                 $order->articles()->attach($article->id, [
-                    'quantity' => $quantity,
+                    'quantity'   => $quantity,
                     'unit_price' => $unitPrice,
                 ]);
 
-                // إنقاص المخزون يدوياً لمحاكاة العملية الحقيقية
-                // ملاحظة: في الـ Seeder لا نستخدم الـ Controller، لذا نعدل المخزون مباشرة
-                $article->stations()
-                        ->wherePivot('station_id', $stationId)
-                        ->decrement('quantity', $quantity);
+                // ✅ إنقاص المخزون عبر Stock مباشرة (الطريقة الصحيحة)
+                Stock::where('article_id', $article->id)
+                    ->where('station_id', $stationId)
+                    ->where('quantity', '>', 0)
+                    ->decrement('quantity', $quantity);
+
+                // تسجيل توزيع الطلب على المحطة
+                OrderStationStock::create([
+                    'order_id'   => $order->id,
+                    'article_id' => $article->id,
+                    'station_id' => $stationId,
+                    'quantity'   => $quantity,
+                ]);
 
                 $orderTotal += $quantity * $unitPrice;
             }
 
             $order->update(['global_price' => $orderTotal]);
         }
-        $this->command->info('✅ تم إنشاء 200 طلب مع ربطها بالمحطات وتحديث المخزون');
+        $this->command->info('✅ تم إنشاء 200 طلب');
 
+        // ─── 8. USER ACTIVITY LOGS (لتتبع المشاهدات للـ AI) ─────────────────
+        $this->command->info('👁️ إنشاء سجلات نشاط المستخدمين...');
+        $articleIdsList = Article::pluck('id')->toArray();
+        $activityTypes  = ['product_view', 'product_view', 'product_view', 'search', 'cart_add'];
+
+        foreach ($userIds as $userId) {
+            $numActivities = rand(5, 20);
+            for ($k = 0; $k < $numActivities; $k++) {
+                $articleId    = $articleIdsList[array_rand($articleIdsList)];
+                $activityType = $activityTypes[array_rand($activityTypes)];
+                $article      = Article::find($articleId);
+
+                UserActivityLog::create([
+                    'user_id'       => $userId,
+                    'session_id'    => 'seed_session_' . $userId,
+                    'ip_address'    => '127.0.0.1',
+                    'activity_type' => $activityType,
+                    'entity_type'   => 'article',
+                    'entity_id'     => $articleId,
+                    'device_type'   => ['desktop', 'mobile', 'tablet'][rand(0, 2)],
+                    'metadata'      => json_encode([
+                        'article_name' => $article->name,
+                        'price'        => $article->price,
+                        'category_id'  => $article->category_id,
+                    ]),
+                    'created_at' => now()->subDays(rand(0, 90)),
+                ]);
+
+                // ✅ زيادة times_viewed في ProductAnalytics
+                if ($activityType === 'product_view') {
+                    ProductAnalytics::firstOrCreate(['article_id' => $articleId]);
+                    ProductAnalytics::where('article_id', $articleId)
+                        ->increment('times_viewed');
+                }
+            }
+        }
+        $this->command->info('✅ تم إنشاء سجلات النشاط وتحديث times_viewed');
+
+        // ─── 9. PRODUCT ANALYTICS ────────────────────────────────────────────
+        $this->command->info('📊 إنشاء تحليلات المنتجات...');
+        $articles = Article::all();
+        foreach ($articles as $article) {
+            $analytics = ProductAnalytics::firstOrCreate(['article_id' => $article->id]);
+            $analytics->updateAnalytics();
+            $analytics->predictFutureSales();
+        }
+        $this->command->info('✅ تم إنشاء تحليلات المنتجات');
+
+        // ─── 10. CUSTOMER ANALYTICS ──────────────────────────────────────────
+        $this->command->info('👥 إنشاء تحليلات العملاء...');
+        $usersWithOrders = User::has('orders')->get();
+        foreach ($usersWithOrders as $user) {
+            $analytics = CustomerAnalytics::firstOrCreate(['user_id' => $user->id]);
+            $analytics->updateAnalytics();
+        }
+        $this->command->info('✅ تم إنشاء تحليلات العملاء');
+
+        // ─── 11. RECOMMENDATION LOGS ─────────────────────────────────────────
+        $this->command->info('🎯 إنشاء سجلات التوصيات...');
+        $sampleUsers    = array_slice($userIds, 0, 20);
+        $algoTypes      = ['personalized', 'frequently_bought_together', 'similar_products', 'trending'];
+
+        foreach ($sampleUsers as $userId) {
+            $sourceArticle = Article::find($articleIdsList[array_rand($articleIdsList)]);
+            $recommended   = Article::inRandomOrder()->limit(5)->get();
+
+            $log = RecommendationLog::create([
+                'user_id'              => $userId,
+                'session_id'           => 'seed_reco_' . $userId,
+                'source_article_id'    => $sourceArticle->id,
+                'recommended_articles' => $recommended->map(fn($a) => [
+                    'id'    => $a->id,
+                    'name'  => $a->name,
+                    'price' => $a->price,
+                ])->toArray(),
+                'recommendation_type' => $algoTypes[array_rand($algoTypes)],
+                'algorithm_used'      => 'hybrid_collaborative_filtering',
+                'was_clicked'         => (bool) rand(0, 1),
+                'was_purchased'       => (bool) rand(0, 3) === 0,
+                'created_at'          => now()->subDays(rand(0, 30)),
+            ]);
+
+            // ربط الطلب إذا تم الشراء
+            if ($log->was_purchased) {
+                $order = Order::where('user_id', $userId)
+                    ->where('status', 'confirmed')
+                    ->inRandomOrder()
+                    ->first();
+                if ($order) {
+                    $log->update(['resulting_order_id' => $order->id]);
+                }
+            }
+        }
+        $this->command->info('✅ تم إنشاء سجلات التوصيات');
+
+        $this->command->info('');
         $this->command->info('🎉 اكتملت جميع البيانات التجريبية بنجاح!');
+        $this->command->info('');
+        $this->command->info('📋 ملخص البيانات المنشأة:');
+        $this->command->info('   - ' . Category::count()         . ' فئة');
+        $this->command->info('   - ' . Brand::count()            . ' علامة تجارية');
+        $this->command->info('   - ' . Station::count()          . ' محطة');
+        $this->command->info('   - ' . User::where('role', 'client')->count() . ' مستخدم');
+        $this->command->info('   - ' . Article::count()          . ' منتج');
+        $this->command->info('   - ' . Order::count()            . ' طلب');
+        $this->command->info('   - ' . CustomerAnalytics::count(). ' تحليل عميل');
+        $this->command->info('   - ' . ProductAnalytics::count() . ' تحليل منتج');
+        $this->command->info('   - ' . UserActivityLog::count()  . ' سجل نشاط');
+        $this->command->info('   - ' . RecommendationLog::count(). ' سجل توصية');
     }
 }
