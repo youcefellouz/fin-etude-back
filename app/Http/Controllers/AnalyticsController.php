@@ -47,7 +47,7 @@ class AnalyticsController extends Controller
 
         if (!$analytics) {
             return response()->json([
-                'message' => 'Aucune analyse disponible. Elle sera générée prochainement.',
+                'message' => 'Aucune analytique disponible pour le moment. Elles seront générées bientôt.',
                 'user'    => ['id' => $userId, 'name' => $request->user()->name],
             ], 404);
         }
@@ -68,7 +68,7 @@ class AnalyticsController extends Controller
         $analytics = $this->analyticsService->updateCustomerAnalytics((int) $userId);
 
         if (!$analytics) {
-            return response()->json(['message' => 'Client introuvable'], 404);
+            return response()->json(['message' => 'Client non trouvé'], 404);
         }
 
         return response()->json($analytics->load('user:id,name,email'));
@@ -90,7 +90,7 @@ class AnalyticsController extends Controller
     {
         $analytics = ProductAnalytics::where('article_id', $articleId)->with('article')->first();
         if (!$analytics) {
-            return response()->json(['message' => 'Aucune analyse pour ce produit'], 404);
+            return response()->json(['message' => 'Aucune analytique trouvée pour ce produit'], 404);
         }
         return response()->json($analytics);
     }
@@ -153,7 +153,7 @@ class AnalyticsController extends Controller
         }
 
         $result = $this->aiService->forecastAccuracy($dailySales);
-        return response()->json($result ?? ['message' => 'AI service unavailable']);
+        return response()->json($result ?? ['message' => 'Service IA indisponible']);
     }
 
     public function getPredictions(Request $request)
@@ -248,6 +248,8 @@ class AnalyticsController extends Controller
     {
         $this->analyticsService->updateAllCustomerAnalytics();
         $this->analyticsService->updateAllProductAnalytics();
+        $this->analyticsService->generateSalesPredictions(now(), 'day');  
+        $this->analyticsService->detectPatterns();   
         return response()->json(['message' => 'Toutes les analyses ont été mises à jour']);
     }
 

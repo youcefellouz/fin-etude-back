@@ -11,4 +11,15 @@ class Stock extends Model
         'quantity',
         'station_id',
     ];
+
+      public function article()
+    {
+        return $this->belongsTo(Article::class);
+    }
+
+    public function station()
+    {
+        return $this->belongsTo(Station::class);
+    }
 }
+

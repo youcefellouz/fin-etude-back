@@ -22,7 +22,7 @@ class ResetPasswordMail extends Mailable
     public function envelope(): Envelope
     {
         return new Envelope(
-            subject: 'Réinitialisation du mot de passe'
+            subject: 'Reset Password'
         );
     }
 

@@ -24,7 +24,7 @@ class UpdateDiscountRequest extends FormRequest
         return [
             'type' => 'sometimes|required|string|max:255',
             'value' => 'sometimes|required|numeric',
-            'start_date' => 'sometimes|required|date',
+            'start_date' => 'sometimes|required|date|after_or_equal:today',
             'end_date' => 'sometimes|required|date|after_or_equal:start_date',
         ];
     }

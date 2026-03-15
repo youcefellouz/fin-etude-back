@@ -50,9 +50,9 @@ Route::get('brands', [BrandController::class, 'index']);
 Route::get('brands/{brand}', [BrandController::class, 'show']);
 
 // Stations - Read Only
-Route::get('stations', [StationController::class, 'index']);
+/*Route::get('stations', [StationController::class, 'index']);
 Route::get('stations/{station}', [StationController::class, 'show']);
-Route::get('stations/{station_id}/articles', [StationController::class, 'get_station_articles']);
+Route::get('stations/{station_id}/articles', [StationController::class, 'get_station_articles']);*/
 
 // Discounts - Read Only
 Route::get('discounts', [DiscountController::class, 'index']);
@@ -127,7 +127,9 @@ Route::middleware(['auth:sanctum', 'IsAdmin'])->group(function () {
 
 
      // User Info
-    Route::get('user', [UserController::class, 'GetUser']);
+    Route::get('users', [UserController::class, 'index']);
+    //Route::get('user', [UserController::class, 'GetUser']);
+    
     
     // Articles Management 
     Route::post('articles', [ArticleController::class, 'store']);
@@ -155,11 +157,12 @@ Route::middleware(['auth:sanctum', 'IsAdmin'])->group(function () {
     Route::post('stations', [StationController::class, 'store']);
     Route::put('stations/{station}', [StationController::class, 'update']);
     Route::delete('stations/{station}', [StationController::class, 'destroy']);
-    
+    Route::get('/stations', [StationController::class, 'index']);    
     // Discounts Management
     Route::post('discounts', [DiscountController::class, 'store']);
     Route::put('discounts/{discount}', [DiscountController::class, 'update']);
     Route::delete('discounts/{discount}', [DiscountController::class, 'destroy']);
+    Route::post('discounts/{id}/articles', [DiscountController::class, 'add_article_to_discount']); //
     
     // All Orders 
     Route::get('order/admin', [OrderController::class, 'getallorders']);

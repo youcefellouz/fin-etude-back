@@ -9,7 +9,7 @@ class UpdateAnalyticsCommand extends Command
 {
     protected $signature = 'analytics:update {--type=all : Type of analytics to update (all, customers, products)}';
 
-    protected $description = 'تحديث تحليلات العملاء والمنتجات';
+    protected $description = 'Update customer and product analytics';
 
     protected $analyticsService;
 
@@ -23,21 +23,21 @@ class UpdateAnalyticsCommand extends Command
     {
         $type = $this->option('type');
 
-        $this->info('🚀 بدء تحديث التحليلات...');
+        $this->info('🚀 Démarrage de la mise à jour des analytiques...');
 
         if ($type === 'all' || $type === 'customers') {
-            $this->info('📊 تحديث تحليلات العملاء...');
+            $this->info('📊 Mise à jour des analytiques clients...');
             $this->analyticsService->updateAllCustomerAnalytics();
-            $this->info('✅ تم تحديث تحليلات العملاء');
+            $this->info('✅ Analytiques clients mises à jour avec succès');
         }
 
         if ($type === 'all' || $type === 'products') {
-            $this->info('📦 تحديث تحليلات المنتجات...');
+            $this->info('📦 Mise à jour des analytiques produits...');
             $this->analyticsService->updateAllProductAnalytics();
-            $this->info('✅ تم تحديث تحليلات المنتجات');
+            $this->info('✅ Analytiques produits mises à jour avec succès');
         }
 
-        $this->info('🎉 اكتمل تحديث التحليلات بنجاح!');
+        $this->info('🎉 Mise à jour des analytiques terminée avec succès !');
 
         return Command::SUCCESS;
     }

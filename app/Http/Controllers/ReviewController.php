@@ -20,41 +20,28 @@ class ReviewController extends Controller
     }
 
     public function store(StoreReviewRequest $request)
-    {
-        $user = Auth::user();
+{
+    $user = Auth::user();
 
-        $purchased = Order::where('user_id', $user->id)
-            ->where('status', 'confirmed')
-            ->whereHas('articles', function ($q) use ($request) {
-                $q->where('article_id', $request->article_id);
-            })
-            ->exists();
+    $alreadyReviewed = Review::where('user_id', $user->id)
+        ->where('article_id', $request->article_id)
+        ->exists();
 
-        if (!$purchased) {
-            return response()->json([
-                'message' => 'Vous devez acheter ce produit avant de le noter.'
-            ], 422);
-        }
-
-        $alreadyReviewed = Review::where('user_id', $user->id)
-            ->where('article_id', $request->article_id)
-            ->exists();
-
-        if ($alreadyReviewed) {
-            return response()->json([
-                'message' => 'Vous avez déjà donné un avis sur ce produit.'
-            ], 422);
-        }
-
-        $review = Review::create([
-            'user_id'    => $user->id,
-            'article_id' => $request->article_id,
-            'rating'     => $request->rating,
-            'comment'    => $request->comment,
-        ]);
-
-        return response()->json($review->load('user:id,name'), 201);
+    if ($alreadyReviewed) {
+        return response()->json([
+            'message' => 'you already gave a review to this product'
+        ], 422);
     }
+
+    $review = Review::create([
+        'user_id'    => $user->id,
+        'article_id' => $request->article_id,
+        'rating'     => $request->rating,
+        'comment'    => $request->comment,
+    ]);
+
+    return response()->json($review->load('user:id,name'), 201);
+}
 
     public function destroy($id)
     {

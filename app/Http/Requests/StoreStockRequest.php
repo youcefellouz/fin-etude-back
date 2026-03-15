@@ -43,12 +43,12 @@ class StoreStockRequest extends FormRequest
     function messages(): array
     {
         return [
-            'station_id.required' => 'Le champ station_id est requis.',
-            'station_id.exists' => 'Le station_id doit exister dans la table stations.',
-            'article_id.required' => 'Le champ article_id est requis.',
-            'article_id.exists' => 'Le article_id doit exister dans la table articles.',
-            'quantity.required' => 'Le champ quantity est requis.',
-            'quantity.numeric' => 'Le champ quantity doit être un nombre.',
-        ];
+    'station_id.required' => 'The station_id field is required.',
+    'station_id.exists'   => 'The station_id must exist in the stations table.',
+    'article_id.required' => 'The article_id field is required.',
+    'article_id.exists'   => 'The article_id must exist in the articles table.',
+    'quantity.required'   => 'The quantity field is required.',
+    'quantity.numeric'    => 'The quantity field must be a number.',
+];
     }
 }

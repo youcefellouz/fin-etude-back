@@ -10,10 +10,11 @@ use App\Http\Requests\UpdateStockRequest;
 
 class StockController extends Controller
 {
-     public function index(){ 
-        $stocks=Stock::all();
-        return response()->json($stocks);
-    }
+    public function index()
+{
+    $stocks = Stock::with(['article', 'station'])->get();
+    return response()->json($stocks);
+}
      public function store(StoreStockRequest $request){ 
        $stock=Stock::create($request->validated()); 
        return response()->json($stock,201); 

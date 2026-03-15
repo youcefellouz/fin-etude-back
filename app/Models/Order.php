@@ -13,6 +13,9 @@ class Order extends Model
         //'station_id', 
         'guest_name',
         'guest_phone',
+        'city',
+        'address',
+        'payment_method',
     ];
 
     public function user()

@@ -6,28 +6,22 @@ use Illuminate\Foundation\Http\FormRequest;
 
 class UpdateArticleRequest extends FormRequest
 {
-    /**
-     * Determine if the user is authorized to make this request.
-     */
     public function authorize(): bool
     {
         return true;
     }
 
-    /**
-     * Get the validation rules that apply to the request.
-     *
-     * @return array<string, \Illuminate\Contracts\Validation\ValidationRule|array<mixed>|string>
-     */
     public function rules(): array
     {
+        $articleId = $this->route('article');
+
         return [
-            'name' => 'required|string|max:255|unique:articles,name',
+            'name'        => 'required|string|max:255|unique:articles,name,' . $articleId,
             'description' => 'nullable|string',
-            'price' => 'required|numeric|min:0',
+            'price'       => 'required|numeric|min:0',
             'category_id' => 'required|exists:categories,id',
-            'brand_id' => 'required|exists:brands,id',
-            'image_url' => 'nullable|url',
+            'brand_id'    => 'required|exists:brands,id',
+            'image'       => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048',
         ];
     }
 }

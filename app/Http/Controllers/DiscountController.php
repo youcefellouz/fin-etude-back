@@ -41,7 +41,7 @@ class DiscountController extends Controller
     
     if ($discount->articles()->where('article_id', $request->article_id)->exists()) {
         return response()->json([
-            'message' => 'This article is already linked to this discount'
+            'message' => 'Cet article est déjà lié à cette remise'
         ], 409);
     }
 

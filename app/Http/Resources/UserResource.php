@@ -13,6 +13,7 @@ class UserResource extends JsonResource
             'id' => $this->id,
             'name' => $this->name,
             'email' => $this->email,
+            'role' => $this->role, 
             'created_date' => $this->created_at->format('d-m-Y'),
             'profile' => new ProfileResource($this->whenLoaded('profile')),
         ];

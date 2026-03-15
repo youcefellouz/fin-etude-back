@@ -9,7 +9,7 @@ class DetectPatternsCommand extends Command
 {
     protected $signature = 'analytics:detect-patterns';
 
-    protected $description = 'كشف الأنماط وإنشاء التنبيهات الذكية';
+    protected $description = 'detect patterns and create smart alerts';
 
     protected $analyticsService;
 
@@ -21,12 +21,12 @@ class DetectPatternsCommand extends Command
 
     public function handle()
     {
-        $this->info('🔍 بدء كشف الأنماط...');
+        $this->info('🔍 Démarrage de la détection des patterns...');
 
         $alerts = $this->analyticsService->detectPatterns();
 
-        $this->info('✅ تم كشف الأنماط بنجاح');
-        $this->info("📢 تم إنشاء " . count($alerts) . " تنبيه جديد");
+        $this->info('✅ Patterns détectés avec succès');
+        $this->info("📢 Créé avec succès " . count($alerts) . " nouvelles alertes");
 
         return Command::SUCCESS;
     }

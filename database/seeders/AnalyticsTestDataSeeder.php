@@ -16,6 +16,8 @@ use App\Models\CustomerAnalytics;
 use App\Models\ProductAnalytics;
 use App\Models\UserActivityLog;
 use App\Models\RecommendationLog;
+use App\Models\Review;
+use App\Models\RepairRequest;
 
 class AnalyticsTestDataSeeder extends Seeder
 {
@@ -24,7 +26,18 @@ class AnalyticsTestDataSeeder extends Seeder
         $this->command->info('🚀 بدء إنشاء البيانات التجريبية...');
 
         // ─── 1. CATEGORIES ────────────────────────────────────────────────────
-        $categories = ['Electronics', 'Clothing', 'Books', 'Home & Garden', 'Sports', 'Toys', 'Beauty'];
+        $categories = [
+    'Laptops & Ordinateurs',
+    'Smartphones & Tablettes',
+    'Écrans & Moniteurs',
+    'Composants PC',
+    'Périphériques',
+    'Réseaux & Connectivité',
+    'Stockage & Mémoire',
+    'Imprimantes & Scanners',
+    'Audio & Son',
+    'Accessoires',
+];
         foreach ($categories as $cat) {
             if (!Category::where('name', $cat)->exists()) {
                 Category::create(['name' => $cat]);
@@ -33,7 +46,7 @@ class AnalyticsTestDataSeeder extends Seeder
         $this->command->info('✅ تم إنشاء الفئات');
 
         // ─── 2. BRANDS ───────────────────────────────────────────────────────
-        $brands = ['Samsung', 'Apple', 'Nike', 'Adidas', 'Sony', 'LG', 'HP', 'Dell'];
+        $brands = ['Samsung', 'Apple','Honor', 'Adidas', 'Sony', 'LG', 'HP', 'Dell'];
         foreach ($brands as $brand) {
             if (!Brand::where('name', $brand)->exists()) {
                 Brand::create(['name' => $brand]);
@@ -116,12 +129,16 @@ class AnalyticsTestDataSeeder extends Seeder
             $userId    = $userIds[array_rand($userIds)];
             $stationId = $allStationIds[array_rand($allStationIds)];
 
+            $cities = ['tunis','sousse','sfax','bizerte','gabes','monastir','nabeul','kairouan','ariana','beja'];
             $order = Order::create([
-                'user_id'      => $userId,
-                'status'       => $statuses[array_rand($statuses)],
-                'global_price' => 0,
-                'created_at'   => now()->subDays(rand(0, 90)),
-                'updated_at'   => now()->subDays(rand(0, 90)),
+                'user_id'        => $userId,
+                'status'         => $statuses[array_rand($statuses)],
+                'global_price'   => 0,
+                'city'           => $cities[array_rand($cities)],
+                'address'        => rand(1, 99) . ' Rue Test, Quartier ' . rand(1, 10),
+                'payment_method' => ['cash', 'card'][rand(0, 1)],
+                'created_at'     => now()->subDays(rand(0, 90)),
+                'updated_at'     => now()->subDays(rand(0, 90)),
             ]);
 
             $numArticles = rand(1, 6);
@@ -138,10 +155,10 @@ class AnalyticsTestDataSeeder extends Seeder
                     'unit_price' => $unitPrice,
                 ]);
 
-                // ✅ إنقاص المخزون عبر Stock مباشرة (الطريقة الصحيحة)
+                // ✅ إنقاص المخزون بدون نزول تحت الصفر
                 Stock::where('article_id', $article->id)
                     ->where('station_id', $stationId)
-                    ->where('quantity', '>', 0)
+                    ->where('quantity', '>=', $quantity)
                     ->decrement('quantity', $quantity);
 
                 // تسجيل توزيع الطلب على المحطة
@@ -254,6 +271,106 @@ class AnalyticsTestDataSeeder extends Seeder
         }
         $this->command->info('✅ تم إنشاء سجلات التوصيات');
 
+        // ─── 12. REVIEWS ─────────────────────────────────────────────────────
+        $this->command->info('⭐ إنشاء تقييمات المنتجات...');
+        $comments = [
+            'Excellent produit, je recommande !',
+            'Très bonne qualité, livraison rapide.',
+            'Produit conforme à la description.',
+            'Bon rapport qualité/prix.',
+            'Satisfait de mon achat.',
+            'Produit correct mais emballage abîmé.',
+            'Déçu par la qualité, pas à la hauteur.',
+            'Parfait, exactement ce que je cherchais !',
+            'Bonne qualité, mais un peu cher.',
+            'Je suis très content de cet achat.',
+        ];
+
+        // chaque user note entre 1 et 5 produits qu'il a commandés
+        $usersWithOrders = User::has('orders')->get();
+        foreach ($usersWithOrders as $user) {
+            $purchasedArticleIds = $user->orders()
+                ->where('status', 'confirmed')
+                ->with('articles')
+                ->get()
+                ->pluck('articles')
+                ->flatten()
+                ->pluck('id')
+                ->unique()
+                ->values()
+                ->toArray();
+
+            if (empty($purchasedArticleIds)) continue;
+
+            $toReview = array_slice($purchasedArticleIds, 0, rand(1, min(5, count($purchasedArticleIds))));
+
+            foreach ($toReview as $articleId) {
+                // unique constraint: un user ne peut noter un article qu'une fois
+                if (Review::where('user_id', $user->id)->where('article_id', $articleId)->exists()) continue;
+
+                Review::create([
+                    'user_id'    => $user->id,
+                    'article_id' => $articleId,
+                    'rating'     => rand(1, 5),
+                    'comment'    => rand(0, 1) ? $comments[array_rand($comments)] : null,
+                    'created_at' => now()->subDays(rand(0, 60)),
+                    'updated_at' => now()->subDays(rand(0, 60)),
+                ]);
+            }
+        }
+        $this->command->info('✅ تم إنشاء التقييمات');
+
+        // ─── 13. REPAIR REQUESTS ─────────────────────────────────────────────
+        $this->command->info('🔧 إنشاء طلبات الإصلاح...');
+        $techniqueStations = Station::where('type', 'technique')->pluck('id')->toArray();
+
+        // fallback إذا لا توجد محطة تقنية
+        if (empty($techniqueStations)) {
+            $techniqueStations = Station::pluck('id')->toArray();
+        }
+
+        $repairStatuses = ['en_attente', 'en_cours', 'termine', 'refuse'];
+        $repairDescriptions = [
+            'Écran cassé, besoin de remplacement.',
+            'Batterie ne charge plus.',
+            'Problème de clavier, touches bloquées.',
+            'Surchauffe anormale du processeur.',
+            'Port USB défaillant.',
+            'Problème de connexion WiFi.',
+            'Son ne fonctionne plus.',
+            'Ventilateur fait du bruit.',
+            'Problème au démarrage.',
+            'Écran qui scintille.',
+        ];
+
+        $sampleUsersForRepair = array_slice($userIds, 0, 30);
+        foreach ($sampleUsersForRepair as $userId) {
+            $numRepairs = rand(0, 3);
+            for ($r = 0; $r < $numRepairs; $r++) {
+                $status      = $repairStatuses[array_rand($repairStatuses)];
+                $stationId   = $techniqueStations[array_rand($techniqueStations)];
+                $articleId   = $articleIdsList[array_rand($articleIdsList)];
+                $appointDate = now()->subDays(rand(0, 60));
+
+                RepairRequest::create([
+                    'user_id'          => $userId,
+                    'station_id'       => $stationId,
+                    'article_id'       => $articleId,
+                    'description'      => $repairDescriptions[array_rand($repairDescriptions)],
+                    'status'           => $status,
+                    'warranty'         => (bool) rand(0, 1),
+                    'estimated_cost'   => in_array($status, ['en_cours', 'termine']) ? rand(30, 300) : null,
+                    'appointment_date' => $appointDate,
+                    'technician_note'  => $status === 'termine'
+                        ? 'Réparation effectuée avec succès.'
+                        : ($status === 'refuse' ? 'Pièce introuvable.' : null),
+                    'created_at' => $appointDate,
+                    'updated_at' => $appointDate,
+                ]);
+            }
+        }
+        $this->command->info('✅ تم إنشاء طلبات الإصلاح');
+
         $this->command->info('');
         $this->command->info('🎉 اكتملت جميع البيانات التجريبية بنجاح!');
         $this->command->info('');
@@ -268,5 +385,7 @@ class AnalyticsTestDataSeeder extends Seeder
         $this->command->info('   - ' . ProductAnalytics::count() . ' تحليل منتج');
         $this->command->info('   - ' . UserActivityLog::count()  . ' سجل نشاط');
         $this->command->info('   - ' . RecommendationLog::count(). ' سجل توصية');
+        $this->command->info('   - ' . Review::count()           . ' تقييم');
+        $this->command->info('   - ' . RepairRequest::count()    . ' طلب إصلاح');
     }
 }

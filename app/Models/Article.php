@@ -6,6 +6,7 @@ use Illuminate\Database\Eloquent\Model;
 
 class Article extends Model
 {
+    
     protected $fillable = [
         'name',
         'description',
@@ -14,6 +15,7 @@ class Article extends Model
         'brand_id',
         'image',
     ];
+    protected $appends = ['price_after_discount'];
 
     public function category()
     {
@@ -39,6 +41,12 @@ class Article extends Model
     {
         return $this->belongsToMany(Station::class, 'stocks')->withPivot('quantity');
     }
+
+    public function stocks()
+{
+    return $this->hasMany(\App\Models\Stock::class);
+}
+
     public function stationDistributions()
 {
     return $this->hasMany(OrderStationStock::class);

@@ -21,12 +21,11 @@ class UpdateProfileRequest extends FormRequest
      */
     public function rules(): array
     {
-        return [
-            'phone' => 'nullable|string|max:20',
-            'address' => 'nullable|string|max:255',
-            'user_id' => 'sometimes|required|exists:users,id',
-            'date_birth' => 'nullable|date',
-            'image' => 'nullable|image|max:2048',
+          return [
+            'phone'     => 'nullable|string|max:20',
+            'address'   => 'nullable|string|max:255',
+            'birthdate' => 'nullable|date',  
+            'image'     => 'nullable|image|max:2048',
         ];
     }
 }

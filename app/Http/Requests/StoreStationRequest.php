@@ -31,11 +31,11 @@ class StoreStationRequest extends FormRequest
     }
     function messages(): array
     {
-        return [
-            'name.required' => 'Le champ nom est requis.',
-            'city.required' => 'Le champ ville est requis.',
-            'type.required' => 'Le champ type est requis.',
-            'location.required' => 'Le champ localisation est requis.',
-        ];
+       return [
+    'name.required'     => 'The name field is required.',
+    'city.required'     => 'The city field is required.',
+    'type.required'     => 'The type field is required.',
+    'location.required' => 'The location field is required.',
+];
     }
 }

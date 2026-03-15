@@ -11,9 +11,10 @@ class ProfileResource extends JsonResource
     public function toArray(Request $request): array
     {
         return [
-            'phone'=>$this->phone,
-            'address'=>$this->address,
-            'date_birth'=>$this->date_birth,
+            'phone'      => $this->phone,
+            'address'    => $this->address,
+            'date_birth' => $this->date_birth,
+            'image'      => $this->image,
         ];
     }
 }

@@ -24,23 +24,23 @@ class StoreDiscountRequest extends FormRequest
         return [
             'type' => 'required|in:percentage,valeur',
             'value' => 'required|numeric|min:1|max:100',
-            'start_date' => 'required|date',
+            'start_date' => 'required|date|after_or_equal:today',
             'end_date' => 'required|date|after_or_equal:start_date',
         ];
     }
     public function messages(): array
     {
         return [
-            'type.required' => 'Le type de réduction est requis.',
-            'type.string' => 'Le type de réduction doit être une chaîne de caractères.',
-            'type.max' => 'Le type de réduction ne peut pas dépasser 255 caractères.',
-            'value.required' => 'La valeur de la réduction est requise.',
-            'value.numeric' => 'La valeur de la réduction doit être un nombre.',
-            'start_date.required' => 'La date de début est requise.',
-            'start_date.date' => 'La date de début doit être une date valide.',
-            'end_date.required' => 'La date de fin est requise.',
-            'end_date.date' => 'La date de fin doit être une date valide.',
-            'end_date.after_or_equal' => 'La date de fin doit être postérieure ou égale à la date de début.',
+            'type.required' => 'Discount type is required.',
+'type.string' => 'Discount type must be a string.',
+'type.max' => 'Discount type cannot exceed 255 characters.',
+'value.required' => 'Discount value is required.',
+'value.numeric' => 'Discount value must be a number.',
+'start_date.required' => 'Start date is required.',
+'start_date.date' => 'Start date must be a valid date.',
+'end_date.required' => 'End date is required.',
+'end_date.date' => 'End date must be a valid date.',
+'end_date.after_or_equal' => 'End date must be on or after the start date.',
         ];
     }
 }

@@ -15,6 +15,16 @@ return new class extends Migration
     $table->id();
     $table->decimal('global_price', 10, 2)->default(0);
     $table->string('status')->default('pending');
+    $table->enum('city', [
+    'tunis','sousse','sfax','bizerte','gabes','monastir',
+    'nabeul','tozeur','kairouan','kasserine','guelbes',
+    'jendouba','kef','mahdia','medenine','manouba',
+    'zaghouan','siliana','ariana','beja','ben arous',
+    'sidi bouzid','tataouine','test'
+])->default('test');
+    $table->string('address');
+    $table->enum('payment_method', ['cash', 'card'])->default('cash');
+    
     // client with account
     $table->foreignId('user_id')
           ->nullable()

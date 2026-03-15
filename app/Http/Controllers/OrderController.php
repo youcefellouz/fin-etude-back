@@ -32,19 +32,21 @@ class OrderController extends Controller
             if ($totalAvailable < $articleData['quantity']) {
                 $article = Article::find($articleData['article_id']);
                 return response()->json([
-                    'message' => "stock is not available for '{$article->name}'. available: {$totalAvailable}, required: {$articleData['quantity']}",
+                    'message' => "Le stock n'est pas disponible pour '{$article->name}'. Disponible : {$totalAvailable}, Requis : {$articleData['quantity']}",
                 ], 400);
             }
         }
 
         // create order
         $order = Order::create([
-            'user_id'      => $user?->id,
-            //'station_id'   => null,
-            'guest_name'   => $user ? null : $request->guest_name,
-            'guest_phone'  => $user ? null : $request->guest_phone,
-            'status'       => 'pending',
-            'global_price' => 0,
+            'user_id'        => $user?->id,
+            'guest_name'     => $user ? null : $request->guest_name,
+            'guest_phone'    => $user ? null : $request->guest_phone,
+            'city'           => $request->city,
+            'address'        => $request->address,
+            'payment_method' => $request->payment_method,
+            'status'         => 'pending',
+            'global_price'   => 0,
         ]);
 
         $syncData = [];
@@ -99,10 +101,10 @@ class OrderController extends Controller
         $user  = auth('sanctum')->user();
 
         if ($user && $order->user_id !== $user->id) {
-            return response()->json(['message' => 'You are not authorized to update this order'], 403);
+            return response()->json(['message' => 'Vous n\'êtes pas autorisé à modifier cette commande'], 403);
         }
 
-        $order->update($request->only(['guest_name', 'guest_phone', 'status']));
+        $order->update($request->only(['guest_name', 'guest_phone', 'city', 'address', 'payment_method', 'status']));
 
         if ($request->has('articles')) {
 
@@ -116,7 +118,7 @@ class OrderController extends Controller
                 if ($totalAvailable < $articleData['quantity']) {
                     $article = Article::find($articleData['article_id']);
                     return response()->json([
-                        'message' => "The stock is not available for '{$article->name}'. Available: {$totalAvailable}, Required: {$articleData['quantity']}",
+                        'message' => "Le stock n'est pas disponible pour '{$article->name}'. Disponible : {$totalAvailable}, Requis : {$articleData['quantity']}",
                     ], 400);
                 }
             }
@@ -202,33 +204,40 @@ class OrderController extends Controller
     }
 
     public function pay(Request $request, $id)
-    {
-        $order = Order::findOrFail($id);
-        $user  = auth('sanctum')->user();
+{
+    $order = Order::findOrFail($id);
+    $user  = auth('sanctum')->user();
 
-        // Registered user: verify ownership via user_id
-        if ($order->user_id) {
-            if (!$user || $order->user_id !== $user->id) {
-                return response()->json(['message' => 'Non autorisé'], 403);
-            }
-        } else {
-            // Guest order: verify ownership via guest_phone
-            if (!$request->guest_phone || $order->guest_phone !== $request->guest_phone) {
-                return response()->json(['message' => 'Non autorisé'], 403);
-            }
+    if ($order->user_id) {
+        if (!$user || $order->user_id !== $user->id) {
+            return response()->json(['message' => 'Non autorisé'], 403);
         }
-
-        if ($order->status !== 'pending') {
-            return response()->json([
-                'message' => 'Cette commande ne peut pas être payée.'
-            ], 422);
+    } else {
+        if (!$request->guest_phone || $order->guest_phone !== $request->guest_phone) {
+            return response()->json(['message' => 'Non autorisé'], 403);
         }
-
-        $order->update(['status' => 'confirmed']);
-
-        return response()->json([
-            'message' => 'Paiement effectué avec succès!',
-            'order'   => $order
-        ], 200);
     }
+
+    if ($order->status !== 'pending') {
+        return response()->json(['message' => 'Cette commande ne peut pas être payée'], 422);
+    }
+
+    $order->update(['status' => 'confirmed']);
+    $order->load('articles');
+
+    // ← try/catch حتى لا يوقف الـ response عند فشل البريد
+    try {
+        $email = $user?->email ?? null;
+        if ($email) {
+            \Mail::to($email)->send(new \App\Mail\OrderConfirmedMail($order));
+        }
+    } catch (\Exception $e) {
+        \Log::error('Mail error: ' . $e->getMessage());
+    }
+
+    return response()->json([
+        'message' => 'Paiement effectué avec succès',
+        'order'   => $order
+    ], 200);
+}
 }

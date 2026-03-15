@@ -21,14 +21,14 @@ class StoreArticleRequest extends FormRequest
      */
     public function rules(): array
     {
-        return [
-            'name' => 'required|string|max:255|unique:articles,name',
-            'description' => 'nullable|string',
-            'price' => 'required|numeric|min:0',
-            'category_id' => 'required|exists:categories,id',
-            'brand_id' => 'required|exists:brands,id',
-            'image' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048',
-        ];
+          return [
+        'name'        => 'required|string|max:255|unique:articles,name',
+        'description' => 'sometimes|nullable|string',  // ← sometimes
+        'price'       => 'required|numeric|min:0',
+        'category_id' => 'required|exists:categories,id',
+        'brand_id'    => 'required|exists:brands,id',
+        'image'       => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048',
+    ];
     }
     function messages()
     {

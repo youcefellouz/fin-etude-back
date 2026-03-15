@@ -13,11 +13,13 @@ class AIService
 {
     private string $baseUrl;
     private int    $timeout;
+    private string $secret;
 
     public function __construct()
     {
         $this->baseUrl = config('services.ai.url', env('AI_SERVICE_URL', 'http://localhost:8001'));
         $this->timeout = (int) config('services.ai.timeout', 30);
+        $this->secret  = env('AI_SERVICE_SECRET', '');
     }
 
     // ─────────────────────────────────────────────────────────────────────────
@@ -94,8 +96,8 @@ class AIService
     public function detectAnomalies(array $dailyRevenue, array $dailyOrders = []): ?array
     {
         return $this->post('/api/patterns/detect', [
-            'daily_revenue' => $dailyRevenue,
-            'daily_orders'  => $dailyOrders,
+            'daily_revenue' => $this->toMetrics($dailyRevenue),
+            'daily_orders'  => $this->toMetrics($dailyOrders),
         ]);
     }
 
@@ -105,10 +107,22 @@ class AIService
     public function fullPatternScan(array $dailyRevenue, array $products = [], array $customers = []): ?array
     {
         return $this->post('/api/patterns/full-scan', [
-            'daily_revenue' => $dailyRevenue,
+            'daily_revenue' => $this->toMetrics($dailyRevenue),
             'products'      => $products,
             'customers'     => $customers,
         ]);
+    }
+
+    /**
+     * Python's PatternRequest expects {date, value} but getDailySalesHistory()
+     * returns {date, revenue, orders}. This maps revenue -> value.
+     */
+    private function toMetrics(array $dailySales): array
+    {
+        return array_map(fn($day) => [
+            'date'  => $day['date'],
+            'value' => (float) ($day['revenue'] ?? $day['value'] ?? 0),
+        ], $dailySales);
     }
 
     // ─────────────────────────────────────────────────────────────────────────
@@ -176,6 +190,7 @@ class AIService
     {
         try {
             $response = Http::timeout($this->timeout)
+                ->withHeaders(['X-AI-Secret' => $this->secret])
                 ->post($this->baseUrl . $endpoint, $payload);
 
             if ($response->successful()) {

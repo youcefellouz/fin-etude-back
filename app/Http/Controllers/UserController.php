@@ -20,6 +20,11 @@ use Carbon\Carbon;
 
 class UserController extends Controller
 {
+    public function index() {
+    $userData = User::with('profile')->get();
+    return UserResource::collection($userData);
+}
+
     public function GetUser(){
     //$User_id=Auth::user()->id;
     $userData=User::with('profile')-> get();
@@ -36,7 +41,7 @@ class UserController extends Controller
             'regex:/[^a-zA-Z0-9]/' // au moins un symbole (#, @, !, etc.)
         ],
     ], [
-        'password.regex' => 'Le mot de passe doit contenir au moins une lettre majuscule et un symbole (ex: #, @, !).',
+        'password.regex' => 'password must contain at least one uppercase letter and one special character',
     ]);
 
     $code = str_pad(random_int(0, 999999), 6, '0', STR_PAD_LEFT);
@@ -176,7 +181,7 @@ public function forgotPassword(Request $request)
     $user = User::where('email', $request->email)->first();
 
     if (!$user) {
-        return response()->json(['message' => 'Aucun compte trouvé avec cet email.'], 404);
+        return response()->json(['message' => 'there is no account with this email'], 404);
     }
 
     $code = str_pad(random_int(0, 999999), 6, '0', STR_PAD_LEFT);
@@ -196,7 +201,7 @@ public function forgotPassword(Request $request)
     Mail::to($request->email)->send(new ResetPasswordMail($code));
 
     return response()->json([
-        'message' => 'Un code de vérification a été envoyé à votre email.',
+        'message' => 'a verification code has been sent to your email',
     ], 200);
 }
 
@@ -210,16 +215,16 @@ public function verifyResetCode(Request $request)
     $reset = DB::table('password_resets')->where('email', $request->email)->first();
 
     if (!$reset) {
-        return response()->json(['message' => 'Aucune demande de réinitialisation trouvée pour cet email.'], 404);
+        return response()->json(['message' => 'no reset request found for this email'], 404);
     }
 
     if (Carbon::now()->isAfter($reset->code_expires_at)) {
         DB::table('password_resets')->where('email', $request->email)->delete();
-        return response()->json(['message' => 'Le code a expiré. Veuillez refaire une demande.'], 410);
+        return response()->json(['message' => 'the code has expired. please request a new one'], 410);
     }
 
     if ($reset->code !== $request->code) {
-        return response()->json(['message' => 'Code de vérification invalide.'], 422);
+        return response()->json(['message' => 'invalid verification code'], 422);
     }
 
     $resetToken = Str::uuid()->toString();
@@ -230,7 +235,7 @@ public function verifyResetCode(Request $request)
     ]);
 
     return response()->json([
-        'message'     => 'Code vérifié avec succès.',
+        'message'     => 'code verified successfully',
         'reset_token' => $resetToken,
     ], 200);
 }
@@ -246,19 +251,19 @@ public function resetPassword(Request $request)
             'regex:/[^a-zA-Z0-9]/' // au moins un symbole (#, @, !, etc.)
         ],
     ], [
-        'password.regex' => 'Le mot de passe doit contenir au moins une lettre majuscule et un symbole (ex: #, @, !).',
+        'password.regex' => 'password must contain at least one uppercase letter and one special character',
     ]);
 
     $reset = DB::table('password_resets')->where('email', $request->email)->first();
 
     if (!$reset || $reset->reset_token !== $request->reset_token) {
-        return response()->json(['message' => 'Token invalide ou expiré.'], 422);
+        return response()->json(['message' => 'invalid reset token'], 422);
     }
 
     $user = User::where('email', $request->email)->first();
 
     if (!$user) {
-        return response()->json(['message' => 'Utilisateur introuvable.'], 404);
+        return response()->json(['message' => 'user not found'], 404);
     }
 
     $user->update([
@@ -268,7 +273,7 @@ public function resetPassword(Request $request)
     DB::table('password_resets')->where('email', $request->email)->delete();
 
     return response()->json([
-        'message' => 'Mot de passe réinitialisé avec succès.',
+        'message' => 'password reset successfully',
     ], 200);
 }
 
